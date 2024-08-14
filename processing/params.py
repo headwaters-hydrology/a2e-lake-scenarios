@@ -44,6 +44,8 @@ lake_site_data = data_path.joinpath('lawa_lake_wq_field_samples_sites_filtered.g
 
 rivers_loads_csv = data_path.joinpath('PredictedYeildDF_REC2_20July2023.csv')
 
+lake_load_inflows = data_path.joinpath('lake_load_inflows.blt')
+
 
 # river_flows_rec_path = data_path.joinpath('NZRiverMaps_hydrology_2023-01-09.csv')
 # rivers_conc_csv_path1 = data_path.joinpath('NutrientConcsYields.csv')
