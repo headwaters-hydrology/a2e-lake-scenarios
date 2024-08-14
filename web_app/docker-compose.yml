@@ -1,0 +1,31 @@
+version: '3.3'
+
+networks:
+  net:
+    # driver: overlay
+    attachable: true
+
+volumes:
+  olw3-assets:
+
+services:
+  assets:
+    image: mullenkamp/olw3-scenario-app-assets:1.11
+    volumes:
+      - olw3-assets:/app/assets
+    networks:
+      - net
+    deploy:
+      restart_policy:
+        condition: none
+
+  olw3-app:
+    image: mullenkamp/olw3-scenario-app:1.19
+    volumes:
+      - olw3-assets:/app/assets
+    networks:
+      - net
+    depends_on:
+      - assets
+    ports:
+      - "8000:80"

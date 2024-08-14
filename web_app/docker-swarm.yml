@@ -1,0 +1,53 @@
+version: '3.3'
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+volumes:
+  olw3-assets:
+
+services:
+  assets:
+    image: mullenkamp/olw3-scenario-app-assets:1.11
+    volumes:
+      - olw3-assets:/app/assets
+    networks:
+      - net
+      # - traefik-public
+    deploy:
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.labels.function == web_server
+
+  dash:
+    image: mullenkamp/olw3-scenario-app:1.19
+    volumes:
+      - olw3-assets:/app/assets
+    networks:
+      # - net
+      - traefik-public
+    depends_on:
+      - assets
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.labels.function == web_server
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.olw3-app-http.rule=Host(`web-app2.monitoringfreshwater.co.nz`)
+        - traefik.http.routers.olw3-app-http.entrypoints=http
+        - traefik.http.routers.olw3-app-http.middlewares=https-redirect
+        - traefik.http.routers.olw3-app-https.rule=Host(`web-app2.monitoringfreshwater.co.nz`)
+        - traefik.http.routers.olw3-app-https.entrypoints=https
+        - traefik.http.routers.olw3-app-https.tls=true
+        # - traefik.http.routers.es-dash-https.tls.certresolver=le
+        - traefik.http.services.olw3-app.loadbalancer.server.port=80

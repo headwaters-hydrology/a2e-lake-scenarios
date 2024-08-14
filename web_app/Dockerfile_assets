@@ -1,0 +1,10 @@
+FROM busybox:1.36.0-musl
+
+COPY ./app/assets/*.blt /assets/
+COPY ./app/assets/*.h5 /assets/
+COPY ./app/assets/*.pbf /assets/
+COPY ./app/assets/*.svg /assets/
+COPY ./app/assets/*.css /assets/
+COPY ./app/assets/*.js /assets/
+
+CMD [ "cp", "-r", "-u", "/assets/", "/app/" ]
