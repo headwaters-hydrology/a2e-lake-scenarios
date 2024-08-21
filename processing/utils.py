@@ -407,14 +407,14 @@ def calc_lcdb_yields(poly, lcdb_geo):
     return lcdb3
 
 
-def combine_yields(catch_id, poly):
+def combine_yields(lake_id, poly):
     """
 
     """
-    with booklet.open(params.sites_lcdb_yields_blt_path) as f:
-        lcdb3 = f[catch_id]
-    with booklet.open(params.sites_farm_yields_blt_path) as f:
-        snb_dairy1 = f[catch_id]
+    with booklet.open(params.lakes_lcdb_yields_blt_path) as f:
+        lcdb3 = f[lake_id]
+    with booklet.open(params.lakes_farm_yields_blt_path) as f:
+        snb_dairy1 = f[lake_id]
 
     # Combo
     if (not snb_dairy1.empty) and (not lcdb3.empty):
@@ -531,7 +531,7 @@ def calc_yields(catch_id, poly, farm_geo, farm_yields, slope_geo, moisture_geo, 
     return combo5
 
 
-def calc_reductions(catch_id, poly, lcdb, snb_dairy):
+def calc_reductions(lake_id, poly, lcdb, snb_dairy):
     """
 
     """
@@ -571,11 +571,11 @@ def calc_reductions(catch_id, poly, lcdb, snb_dairy):
     else:
         combo2 = snb_dairy1
 
-    if catch_id in params.typo_red_corrections:
-        typo_corr = params.typo_red_corrections[catch_id]
-        for typo, corr in typo_corr.items():
-            for ind, val in corr.items():
-                combo2.loc[combo2.typology == typo, ind] = val
+    # if catch_id in params.typo_red_corrections:
+    #     typo_corr = params.typo_red_corrections[catch_id]
+    #     for typo, corr in typo_corr.items():
+    #         for ind, val in corr.items():
+    #             combo2.loc[combo2.typology == typo, ind] = val
 
     ## Aggregate classes
     # combo3 = combo2.replace({'land_cover': params.combine_land_covers})

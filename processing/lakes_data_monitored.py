@@ -11,6 +11,7 @@ import numpy as np
 from statsmodels.tsa import seasonal
 import scipy
 import geopandas as gpd
+import booklet
 
 import utils, params
 
@@ -354,7 +355,7 @@ def test_deseason_resampling_2M(data):
 # data0.to_csv(utils.lakes_source_data_path)
 
 
-def lakes_stdev_monitored_conc():
+def lakes_monitored_conc():
     ## monitoring data from large spreadsheet
     ts_data0 = pd.read_feather(params.lake_moni_data_raw)
     site_data0 = gpd.read_file(params.lake_site_data_raw)
@@ -394,12 +395,61 @@ def lakes_stdev_monitored_conc():
     ## Convert dtls
     moni5 = utils.dtl_correction(ts_data3, 'half').drop('censor_code', axis=1)
 
+    ## Must have recent data
+    moni6 = moni5.set_index(['lawa_id', 'indicator'])
+    grp = moni6.groupby(['lawa_id', 'indicator'])
+
+    max_dates = grp.date.max()
+    recent_bool = (max_dates > '2021-07-01')
+    # recent_bool.name = 'remove'
+
+    max_dates = max_dates[recent_bool] + pd.DateOffset(seconds=1)
+    max_dates.name = 'max_date'
+
+    ## Must have at least 20 samples in the past 5 years
+    min_dates = pd.to_datetime((max_dates - pd.DateOffset(years=5) - pd.offsets.MonthBegin()).dt.date)
+    min_dates.name = 'min_date'
+    min_max_dates = pd.concat([min_dates, max_dates], axis=1)
+
+    data_list = []
+    for i, data in min_max_dates.iterrows():
+        data1 = moni6.loc[i]
+        data2 = data1[(data1.date >= data.min_date) & (data1.date <= data.max_date)].reset_index()
+        if len(data2) >= 20:
+            data_list.append(data2)
+
+    wq_data1 = pd.concat(data_list)
+
+    ## check the sampling frequency and only use data with < 93 days freq
+    freq_list = []
+    for i, row in wq_data1.groupby(['lawa_id', 'indicator']):
+        freq = est_median_freq(row)
+        if freq < 93:
+            freq_list.append([*i, freq])
+
+    freq_df = pd.DataFrame(freq_list, columns=['lawa_id', 'indicator', 'freq'])
+
+    wq_data2 = pd.merge(freq_df[['lawa_id', 'indicator']], wq_data1, on=['lawa_id', 'indicator'])
+
     ## Filter the sites
-    site_data2 = site_data1[site_data1['LawaSiteID'].isin(moni5.lawa_id.unique())].rename(columns={'LawaSiteID': 'lawa_id'})
+    site_data2 = site_data1[site_data1['LawaSiteID'].isin(wq_data2.lawa_id.unique())].rename(columns={'LawaSiteID': 'lawa_id'})
 
     ## Save results
     site_data2.to_file(params.lake_site_data)
     utils.df_to_feather(moni5, params.lake_moni_data)
+
+    ## Calculate the medians per site and lake
+    site_median1 = wq_data2.groupby(['lawa_id', 'indicator'])['value'].median()
+
+    lake_median0 = pd.merge(site_data2[['lawa_id', 'LFENZID']], site_median1.reset_index(), on='lawa_id')
+    # lake_median1 = lake_median0.groupby(['LFENZID', 'indicator'])['value'].mean()
+
+    ## Save data for app
+    with booklet.open(params.lake_moni_conc_blt, 'n', value_serializer='pickle', key_serializer='uint4', n_buckets=10007) as f:
+        for LFENZID, res in lake_median0.groupby('LFENZID'):
+            f[LFENZID] = res.reset_index(drop=True)
+
+
 
 
 

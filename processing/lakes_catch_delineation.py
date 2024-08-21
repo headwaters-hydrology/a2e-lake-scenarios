@@ -28,7 +28,7 @@ pd.options.display.max_columns = 10
 
 
 
-def delin_sites_catch_rec():
+def delin_lakes_catch_rec():
     # break_points = gpd.read_file(utils.catch_break_points_gpkg).to_crs(4326)
     w0 = nzrec.Water(params.nzrec_data_path)
     rec_rivers0 = gpd.read_feather(params.rec_rivers_feather)
@@ -186,8 +186,8 @@ def delin_sites_catch_rec():
     geo_outflows = pd.concat(geo_outflows_list)
     # geo_all = pd.concat(geo_all_list)
 
-    geo_inflows.to_file(params.lake_inflows_shp)
-    geo_outflows.to_file(params.lake_outflows_shp)
+    geo_inflows.to_file(params.lake_inflows_gpkg)
+    geo_outflows.to_file(params.lake_outflows_gpkg)
     # geo_all.to_file(params.lake_catch_segs_shp)
 
     # Booklet
@@ -199,7 +199,7 @@ def delin_sites_catch_rec():
         for LFENZID, branches in outflows.items():
             reaches[LFENZID] = branches
 
-    with booklet.open(params.lake_catch_segs_blt, 'n', value_serializer='pickle_zstd', key_serializer='uint4', n_buckets=1607) as reaches:
+    with booklet.open(params.lakes_reach_mapping_path, 'n', value_serializer='pickle_zstd', key_serializer='uint4', n_buckets=1607) as reaches:
         for LFENZID, branches in all_segs.items():
             reaches[LFENZID] = branches
 
@@ -252,17 +252,17 @@ def delin_sites_catch_rec():
 
 
     # Reach geobufs in blt
-    with booklet.open(params.sites_reach_gbuf_path, 'n', key_serializer='uint4', value_serializer='zstd', n_buckets=1607) as f:
+    with booklet.open(params.lakes_reach_gbuf_path, 'n', key_serializer='uint4', value_serializer='zstd', n_buckets=1607) as f:
         for LFENZID, gbuf in reach_gbuf_dict.items():
             f[LFENZID] = gbuf
 
     # Catchment gpds in blt
-    with booklet.open(params.sites_catch_major_path, 'n', key_serializer='uint4', value_serializer='wkb_zstd', n_buckets=1607) as f:
+    with booklet.open(params.lakes_catch_major_path, 'n', key_serializer='uint4', value_serializer='wkb_zstd', n_buckets=1607) as f:
         for LFENZID, catches in catches_major_dict.items():
             f[LFENZID] = catches
 
     # Catchments geobuf
-    with booklet.open(params.sites_catch_major_gbuf_path, 'n', key_serializer='uint4', value_serializer='zstd', n_buckets=1607) as f:
+    with booklet.open(params.lakes_catch_major_gbuf_path, 'n', key_serializer='uint4', value_serializer='zstd', n_buckets=1607) as f:
         for LFENZID, catches in catches_major_dict.items():
             gdf = gpd.GeoDataFrame([{'LFENZID': way_id}], geometry=[catches], crs=4326).set_index('LFENZID', drop=False)
             gjson = orjson.loads(gdf.to_json())
@@ -273,7 +273,7 @@ def delin_sites_catch_rec():
     rec_shed = gpd.GeoDataFrame(catch_ids, geometry=list(catches_major_dict.values()), crs=4326, columns=['LFENZID'])
     # rec_shed['geometry'] = rec_shed.simplify(0.0004)
 
-    rec_shed.to_file(params.sites_catch_gpkg_path)
+    rec_shed.to_file(params.lakes_catch_gpkg_path)
 
     # gjson = orjson.loads(rec_shed.set_index('nzsegment').to_json())
 
@@ -290,7 +290,7 @@ def delin_sites_catch_rec():
     #     f.write(geobuf.encode(gjson))
 
     ## Produce a file grouped by all catchments as geodataframes
-    with booklet.open(params.sites_catch_minor_path, 'n', key_serializer='uint4', value_serializer='pickle_zstd', n_buckets=500007) as f:
+    with booklet.open(params.lakes_catch_minor_path, 'n', key_serializer='uint4', value_serializer='pickle_zstd', n_buckets=500007) as f:
         for LFENZID, branches in catches_minor_dict.items():
             f[LFENZID] = branches
 

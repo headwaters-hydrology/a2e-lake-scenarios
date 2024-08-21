@@ -27,9 +27,9 @@ lakes_poly_path = data_path.joinpath('lake_polygons_fenz.gpkg')
 ### Loads/concs
 indicators = ['CHLA', 'NH4N', 'Secchi', 'TN', 'TP', 'ECOLI']
 
-lake_inflows_shp = data_path.joinpath('lake_inflows_segments.shp')
-lake_outflows_shp = data_path.joinpath('lake_outflows_segments.shp')
-lake_catch_segs_shp = data_path.joinpath('lake_catchment_segments.shp')
+lake_inflows_gpkg = data_path.joinpath('lake_inflows_segments.gpkg')
+lake_outflows_gpkg = data_path.joinpath('lake_outflows_segments.gpkg')
+lake_catch_segs_gpkg = data_path.joinpath('lake_catchment_segments.gpkg')
 
 lake_inflows_blt = data_path.joinpath('lake_inflows_segments.blt')
 lake_outflows_blt = data_path.joinpath('lake_outflows_segments.blt')
@@ -45,7 +45,12 @@ lake_site_data = data_path.joinpath('lawa_lake_wq_field_samples_sites_filtered.g
 rivers_loads_csv = data_path.joinpath('PredictedYeildDF_REC2_20July2023.csv')
 
 lake_load_inflows = data_path.joinpath('lake_load_inflows.blt')
+lake_model_conc_csv = data_path.joinpath('LakeRF_WQModel_Predictions04Feb2022.csv')
+lake_model_conc_blt = data_path.joinpath('lake_model_conc_median.blt')
+lake_moni_conc_blt = data_path.joinpath('lake_moni_conc_median.blt')
 
+lake_lc_data_csv = data_path.joinpath('lake_land_cover_areas_yields.csv')
+lake_lc_summ_csv = data_path.joinpath('lake_land_cover_summary.csv')
 
 # river_flows_rec_path = data_path.joinpath('NZRiverMaps_hydrology_2023-01-09.csv')
 # rivers_conc_csv_path1 = data_path.joinpath('NutrientConcsYields.csv')
@@ -71,22 +76,22 @@ lake_load_inflows = data_path.joinpath('lake_load_inflows.blt')
 # wq_sites_names_path = data_path.joinpath('river_wq_sites_names.blt')
 
 ## Catchment delineation
-sites_reach_mapping_path = data_path.joinpath('sites_reaches_mapping.blt')
-sites_reach_gbuf_path = data_path.joinpath('sites_reaches_gbuf.blt')
-sites_catch_major_path = data_path.joinpath('sites_catch_major.blt')
-sites_catch_major_gbuf_path = data_path.joinpath('sites_catch_major_gbuf.blt')
+lakes_reach_mapping_path = data_path.joinpath('lake_reaches_mapping.blt')
+lakes_reach_gbuf_path = data_path.joinpath('lake_reaches_gbuf.blt')
+lakes_catch_major_path = data_path.joinpath('lake_catch_major.blt')
+lakes_catch_major_gbuf_path = data_path.joinpath('lake_catch_major_gbuf.blt')
 
-sites_catch_gpkg_path = data_path.joinpath('sites_catch_major.gpkg')
-sites_catch_minor_path = data_path.joinpath('sites_catch_minor.blt')
+lakes_catch_gpkg_path = data_path.joinpath('lake_catch_major.gpkg')
+lakes_catch_minor_path = data_path.joinpath('lake_catch_minor.blt')
 
-sites_catch_names_path = data_path.joinpath('sites_catch_names.blt')
+lakes_catch_names_path = data_path.joinpath('lake_catch_names.blt')
 
 ## Reference concs
 rivers_ref_conc3_csv_path = data_path.joinpath('reference_conc_rec_level_3.csv')
 rivers_ref_conc2_csv_path = data_path.joinpath('reference_conc_rec_level_2.csv')
 rivers_ref_conc_csv_path = data_path.joinpath('reference_conc_rec_clean.csv.zip')
 rec_reference_conc_path = data_path.joinpath('rec_reference_conc.blt')
-site_reference_conc_path = data_path.joinpath('sites_reference_conc.blt')
+lake_reference_conc_path = data_path.joinpath('lake_reference_conc.blt')
 
 ## NPS-FM stats and bands
 wq_data_stats_path = data_path.joinpath('river_wq_data_stats.blt')
@@ -126,17 +131,17 @@ combine_land_covers = {
     }
 
 
-typo_red_corrections = {
-    3076139: {
-        'Warm/Low/Well/Moist': {'phosphorus_reduction': 36, 'nitrogen_reduction': 39},
-        'Cool/Low/Well/Moist': {'phosphorus_reduction': 34, 'nitrogen_reduction': 32},
-        'Cool/Low/Light/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
-        'Warm/Low/Light/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
-        'Warm/Moderate/Light/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
-        'Warm/Moderate/Well/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
-        'High Producing Exotic Grassland': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
-        }
-    }
+# typo_red_corrections = {
+#     3076139: {
+#         'Warm/Low/Well/Moist': {'phosphorus_reduction': 36, 'nitrogen_reduction': 39},
+#         'Cool/Low/Well/Moist': {'phosphorus_reduction': 34, 'nitrogen_reduction': 32},
+#         'Cool/Low/Light/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
+#         'Warm/Low/Light/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
+#         'Warm/Moderate/Light/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
+#         'Warm/Moderate/Well/Moist': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
+#         'High Producing Exotic Grassland': {'phosphorus_reduction': 35, 'nitrogen_reduction': 35},
+#         }
+#     }
 
 yields_csv_path = data_path.joinpath('LandUseToLossRatesV0.csv')
 yields_gpkg_path = data_path.joinpath('SrinivasanTypes.gpkg')
@@ -166,14 +171,14 @@ snb_dairy_red_path = data_path.joinpath('snb_dairy_reductions.feather')
 awm_red_path = data_path.joinpath('awm_reductions.feather')
 awm_yields_path = data_path.joinpath('awm_yields.feather')
 
-sites_farm_yields_blt_path = data_path.joinpath('sites_land_cover_farm_yields.blt')
-sites_lcdb_yields_blt_path = data_path.joinpath('sites_land_cover_lcdb_yields.blt')
-sites_yields_blt_path = data_path.joinpath('sites_land_cover_yields.blt')
+lakes_farm_yields_blt_path = data_path.joinpath('lake_land_cover_farm_yields.blt')
+lakes_lcdb_yields_blt_path = data_path.joinpath('lake_land_cover_lcdb_yields.blt')
+lakes_yields_blt_path = data_path.joinpath('lake_land_cover_yields.blt')
 
-sites_land_cover_reductions_path = data_path.joinpath('sites_land_cover_reductions.blt')
-sites_lc_red_yields_path = data_path.joinpath('sites_land_cover_reductions_yields.blt')
+lakes_land_cover_reductions_path = data_path.joinpath('lake_land_cover_reductions.blt')
+lakes_lc_red_yields_path = data_path.joinpath('lake_land_cover_reductions_yields.blt')
 
-sites_land_cover_catch_path = data_path.joinpath('sites_land_cover_per_catch.blt')
+lake_land_cover_catch_path = data_path.joinpath('lake_land_cover_per_catch.blt')
 example_catch_land_cover_path = data_path.joinpath('example_land_cover_base.gpkg')
 example_catch_land_cover_rec_path = data_path.joinpath('example_land_cover_by_rec_watershed.gpkg')
 sites_land_cover_catch_loads_path = data_path.joinpath('sites_land_cover_per_catch_loads.blt')

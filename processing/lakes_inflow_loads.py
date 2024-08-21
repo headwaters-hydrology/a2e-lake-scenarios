@@ -31,7 +31,7 @@ def process_inflow_loads_lakes():
     ## Yields per segment
     yields0 = pd.read_csv(params.rivers_loads_csv).set_index('nzsegment').rename(columns={'CurrentDRP': 'DRP', 'CurrentNNN': 'NNN', 'CurrentTN': 'TN',  'CurrentTP': 'TP', 'catAreaKM2': 'area_km2', 'Qmean': 'q_mean'})
 
-    q_mean0 = yields0['q_mean'].copy()
+    # q_mean0 = yields0['q_mean'].copy()
     area_ha = (yields0['area_km2'] * 1000).copy()
 
     yields0 = yields0.drop(['q_mean', 'area_km2'], axis=1)
