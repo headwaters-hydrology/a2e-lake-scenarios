@@ -48,6 +48,7 @@ lake_load_inflows = data_path.joinpath('lake_load_inflows.blt')
 lake_model_conc_csv = data_path.joinpath('LakeRF_WQModel_Predictions04Feb2022.csv')
 lake_model_conc_blt = data_path.joinpath('lake_model_conc_median.blt')
 lake_moni_conc_blt = data_path.joinpath('lake_moni_conc_median.blt')
+lake_moni_conc_csv = data_path.joinpath('lake_moni_conc_median.csv')
 
 lake_lc_data_csv = data_path.joinpath('lake_land_cover_areas_yields.csv')
 lake_lc_summ_csv = data_path.joinpath('lake_land_cover_summary.csv')
@@ -85,6 +86,12 @@ lakes_catch_gpkg_path = data_path.joinpath('lake_catch_major.gpkg')
 lakes_catch_minor_path = data_path.joinpath('lake_catch_minor.blt')
 
 lakes_catch_names_path = data_path.joinpath('lake_catch_names.blt')
+
+limnotrack_path = data_path.joinpath('limnotrack')
+
+lt_reach_data_csv = limnotrack_path.joinpath('reach_data.csv')
+lt_inflows_gpkg = limnotrack_path.joinpath('lake_inflows_limnotrack.gpkg')
+lt_outflows_gpkg = limnotrack_path.joinpath('lake_outflows_limnotrack.gpkg')
 
 ## Reference concs
 rivers_ref_conc3_csv_path = data_path.joinpath('reference_conc_rec_level_3.csv')

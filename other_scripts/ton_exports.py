@@ -53,11 +53,12 @@ red0 = pd.concat(red_list)
 yields1 = yields0.drop('geometry', axis=1)
 red1 = red0.drop(['geometry', 'area_ha'], axis=1)
 combo1 = pd.merge(yields1, red1, on=['LFENZID', 'typology', 'land_cover'], how='inner')
+combo1['new_category'] = combo1['land_cover'].replace(params.combine_land_covers)
 
 # sites_data = gpd.read_file(params.wq_sites_gpkg_path)
 
 # combo2 = pd.merge(sites_data.drop('geometry', axis=1), combo1, on='nzsegment').drop_duplicates(['nzsegment', 'typology'])
-combo1.set_index(['LFENZID', 'typology']).to_csv(params.lake_lc_data_csv)
+combo1.set_index(['LFENZID', 'typology', 'land_cover', 'new_category']).to_csv(params.lake_lc_data_csv)
 
 ## Land cover summary
 combo3 = combo1.drop(['area_ha', 'LFENZID'], axis=1)

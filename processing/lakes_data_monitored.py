@@ -443,6 +443,7 @@ def lakes_monitored_conc():
 
     lake_median0 = pd.merge(site_data2[['lawa_id', 'LFENZID']], site_median1.reset_index(), on='lawa_id')
     # lake_median1 = lake_median0.groupby(['LFENZID', 'indicator'])['value'].mean()
+    lake_median0.to_csv(params.lake_moni_conc_csv, index=False)
 
     ## Save data for app
     with booklet.open(params.lake_moni_conc_blt, 'n', value_serializer='pickle', key_serializer='uint4', n_buckets=10007) as f:

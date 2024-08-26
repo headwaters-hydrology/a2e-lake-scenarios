@@ -28,14 +28,55 @@ pd.options.display.max_columns = 10
 
 
 
-def delin_lakes_catch_rec():
+def process_lakes_catch_rec_limnotrack():
+    """
+
+    """
+    rec_rivers0 = gpd.read_feather(params.rec_rivers_feather).drop(['from_node', 'to_node', 'stream_order'], axis=1)
+
+    lt_reach0 = pd.read_csv(params.lt_reach_data_csv).rename(columns={'LID': 'LFENZID'})
+
+    grp1 = lt_reach0.groupby('LFENZID')
+
+    inflows_list = []
+    outflows_list = []
+    for LFENZID, data in grp1:
+        lake_inflow1 = data[data.reachtype2.isin(['in&outflow', 'inflow', 'inflow terminus'])]
+        lake_inflow2 = rec_rivers0.merge(lake_inflow1, on='nzsegment')
+        inflows_list.append(lake_inflow2)
+
+        lake_outflow1 = data[data.reachtype2.isin(['inflow terminus', 'mid-lake terminus', 'outflow'])]
+        lake_outflow2 = rec_rivers0.merge(lake_outflow1, on='nzsegment')
+        outflows_list.append(lake_outflow2)
+
+    inflows = pd.concat(inflows_list)
+    outflows = pd.concat(outflows_list)
+
+    inflows.to_file(params.lt_inflows_gpkg)
+    outflows.to_file(params.lt_outflows_gpkg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # break_points = gpd.read_file(utils.catch_break_points_gpkg).to_crs(4326)
     w0 = nzrec.Water(params.nzrec_data_path)
     rec_rivers0 = gpd.read_feather(params.rec_rivers_feather)
 
     stream_orders = {way_id: v['Strahler stream order'] for way_id, v in w0._way_tag.items()}
 
-    # ways_3rd_up = set([i for i, v in stream_orders.items() if v > 2])
+    ways_3rd_up = set([i for i, v in stream_orders.items() if v > 2])
 
     way = {k: v for k, v in w0._way.items()}
     way_index = {k: v for k, v in w0._way_index.items()}
@@ -53,7 +94,6 @@ def delin_lakes_catch_rec():
     inflows = {}
     outflows = {}
     all_segs = {}
-    outflow_flows = {}
     for LFENZID in lakes_poly.LFENZID:
         if LFENZID > 0:
             LFENZID = int(LFENZID)
@@ -62,21 +102,78 @@ def delin_lakes_catch_rec():
             lake_poly_geo = lakes_poly[lakes_poly.LFENZID == LFENZID]
             geom = lake_poly_geo.iloc[0]['geometry']
 
-            bounds_geom_ids = set(rec_rivers0[rec_rivers0.intersects(geom.boundary)].nzsegment.tolist())
-            within_geom_ids = set(rec_rivers0[rec_rivers0.intersects(geom)].nzsegment.tolist())
+            # Inflows
+            query_geom_ids = set(rec_rivers0[rec_rivers0.intersects(geom.boundary)].nzsegment.tolist())
+
+            if query_geom_ids:
+                inflows0 = set()
+                if len(query_geom_ids) == 1:
+                    inflows0.update(query_geom_ids)
+                else:
+                    geom_lat_lon = lake_poly_geo.to_crs(4326).iloc[0]['geometry']
+                    for way_id in query_geom_ids:
+                        nodes = way[way_id]
+                        up_node = nodes[0]
+                        up_node_coords = Point(w0._node[up_node]*0.0000001)
+                        down_node = nodes[-1]
+                        down_node_coords = Point(w0._node[down_node]*0.0000001)
+    
+                        if not shapely.intersects(geom_lat_lon, down_node_coords):
+                            continue
+                        if shapely.intersects(geom_lat_lon, up_node_coords):
+                            continue
+    
+                        inflows0.add(way_id)
+
+                    # Exceptions for small lakes
+                    if geom.area < 500000:
+                        diff_ways = query_geom_ids.difference(inflows0)
+                        # diff_ways_inflows = set()
+                        for way_id in diff_ways:
+                            down_ways = utils.find_downstream(way_id, node_way, way)
+                            if not inflows0.intersection(down_ways):
+                                nodes = way[way_id]
+                                up_node = nodes[0]
+                                up_node_coords = Point(w0._node[up_node]*0.0000001)
+                                down_node = nodes[-1]
+                                down_node_coords = Point(w0._node[down_node]*0.0000001)
+            
+                                if not shapely.intersects(geom_lat_lon, down_node_coords) and not shapely.intersects(geom_lat_lon, up_node_coords):
+                                    inflows0.add(way_id)
+
+                    # Check for segments upstream of other inflows
+                    for way_id in copy(inflows0):
+                        up_ways = nzrec.utils.find_upstream(way_id, node_way, way, way_index)
+                        up_ways.remove(way_id)
+                        combo = inflows0.intersection(up_ways)
+                        if combo:
+                            for i in combo:
+                                inflows0.remove(i)
+                        # intersect0 = query_geom_ids.intersection(up_ways)
+                        # if len(intersect0) == 1:
+                        #     inflows0.add(way_id)
+
+                    # if not inflows0:
+                    #     if LFENZID != 15034:
+                    #         d
+                        # up_ways = nzrec.utils.find_upstream(way_id, node_way, way, way_index)
+
+                inflows[LFENZID] = inflows0
 
             # Outflows
+            query_geom_ids = set(rec_rivers0[rec_rivers0.intersects(geom)].nzsegment.tolist())
+
             outflows0 = set()
-            if within_geom_ids:
-                if len(within_geom_ids) == 1:
-                    outflows0.update(within_geom_ids)
+            if query_geom_ids:
+                if len(query_geom_ids) == 1:
+                    outflows0.update(query_geom_ids)
                 else:
-                    for way_id in within_geom_ids:
+                    for way_id in query_geom_ids:
                         down_ways = utils.find_downstream(way_id, node_way, way)
                         if len(down_ways) > 1:
                             way_id_outflows = set()
                             for down_way in reversed(down_ways[1:]):
-                                if down_way in within_geom_ids:
+                                if down_way in query_geom_ids:
                                     way_id_outflows.add(down_way)
                                     break
                             if not way_id_outflows:
@@ -88,66 +185,8 @@ def delin_lakes_catch_rec():
 
                 outflows[LFENZID] = outflows0
 
-            # Inflows
-            # if bounds_geom_ids:
-            #     inflows0 = set()
-            #     if len(bounds_geom_ids) == 1:
-            #         inflows0.update(bounds_geom_ids)
-            #     else:
-            #         geom_lat_lon = lake_poly_geo.to_crs(4326).iloc[0]['geometry']
-            #         for way_id in bounds_geom_ids:
-            #             nodes = way[way_id]
-            #             up_node = nodes[0]
-            #             up_node_coords = Point(w0._node[up_node]*0.0000001)
-            #             down_node = nodes[-1]
-            #             down_node_coords = Point(w0._node[down_node]*0.0000001)
-
-            #             if not shapely.intersects(geom_lat_lon, down_node_coords):
-            #                 continue
-            #             if shapely.intersects(geom_lat_lon, up_node_coords):
-            #                 continue
-
-            #             inflows0.add(way_id)
-
-            #         # Exceptions for small lakes
-            #         if geom.area < 500000:
-            #             diff_ways = bounds_geom_ids.difference(inflows0)
-            #             # diff_ways_inflows = set()
-            #             for way_id in diff_ways:
-            #                 down_ways = utils.find_downstream(way_id, node_way, way)
-            #                 if not inflows0.intersection(down_ways):
-            #                     nodes = way[way_id]
-            #                     up_node = nodes[0]
-            #                     up_node_coords = Point(w0._node[up_node]*0.0000001)
-            #                     down_node = nodes[-1]
-            #                     down_node_coords = Point(w0._node[down_node]*0.0000001)
-
-            #                     if not shapely.intersects(geom_lat_lon, down_node_coords) and not shapely.intersects(geom_lat_lon, up_node_coords):
-            #                         inflows0.add(way_id)
-
-            #         # First order segments in the lake
-            #         for way_id in outflows0:
-            #             up_ways = nzrec.utils.find_upstream(way_id, node_way, way, way_index)
-            #             # end_segs = set()
-            #             for seg in up_ways:
-            #                 if seg in within_geom_ids:
-            #                     if stream_orders[seg] == 1:
-            #                         inflows0.add(seg)
-
-            #         # Check for segments upstream of other inflows
-            #         for way_id in copy(inflows0):
-            #             up_ways = nzrec.utils.find_upstream(way_id, node_way, way, way_index)
-            #             up_ways.remove(way_id)
-            #             combo = inflows0.intersection(up_ways)
-            #             if combo:
-            #                 for i in combo:
-            #                     inflows0.remove(i)
-
-            #     inflows[LFENZID] = inflows0
-
-                # Final exception
-                # if not inflows[LFENZID]:
-                #     inflows[LFENZID].update(outflows0)
+                if not inflows[LFENZID]:
+                    inflows[LFENZID].update(outflows0)
 
             # All segs in catchment
             if outflows0:
@@ -157,32 +196,6 @@ def delin_lakes_catch_rec():
                     all_segs0.update(up_ways)
 
                 all_segs[LFENZID] = all_segs0
-
-            # Flows at the outflows
-            flows = {}
-            for way_id in outflows0:
-                flow = w0._way_tag[way_id]['Mean Flow']
-                if not isinstance(flow, float):
-                    while True:
-                        down_ways = utils.find_downstream(way_id, node_way, way)
-                        if len(down_ways) > 1:
-                            down_way = down_ways[1]
-                            up_ways = nzrec.utils.find_upstream(down_way, node_way, way, way_index)
-                            out_others = outflows0.difference(set([way_id]))
-                            for out_other in out_others:
-                                if out_other in up_ways:
-                                    flows.pop(out_other, None)
-
-                            new_flow = w0._way_tag[down_way]['Mean Flow']
-                            if not isinstance(new_flow, float):
-                                way_id = down_way
-                            else:
-                                flows[down_way] = new_flow
-                                break
-                    else:
-                        raise ValueError('We have a problem...')
-                else:
-                    flows[way_id] = flow
 
 
     ## Save results
@@ -240,14 +253,14 @@ def delin_lakes_catch_rec():
     for LFENZID, ways_up in all_segs.items():
         print(LFENZID)
 
-        # Reaches
+        # Reaches - only 3rd order and greater for rendering
         geo = []
         data = []
         for w in ways_up:
-            # if w in ways_3rd_up:
-            nodes = way[w]
-            geo.append(LineString(np.array([w0._node[i] * 0.0000001 for i in nodes])).simplify(0.0004))
-            data.append({'nzsegment': int(w)})
+            if w in ways_3rd_up:
+                nodes = way[w]
+                geo.append(LineString(np.array([w0._node[i] * 0.0000001 for i in nodes])).simplify(0.0004))
+                data.append({'nzsegment': int(w)})
         # data = [{'nzsegment': int(i)} for i in ways_up]
 
         if data:
