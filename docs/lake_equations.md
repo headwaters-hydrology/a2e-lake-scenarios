@@ -4,9 +4,11 @@ These are the simplified lake equations solved for the change ratio as defined a
 ### TP
 #### Current conditions
 When $\hspace{2mm} z_{max} \gt 7.5$:
+
 $$
 r_{lake} = r_{in}^{1/b}
 $$
+
 where...
 $$
 b = 1 + 0.44 \tau^{0.13}
