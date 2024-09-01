@@ -1,5 +1,5 @@
-## Lake equations for changes in input loads
-These are the simplified lake equations solved for the change ratio as defined as the new input load (from reductions to to mitigations) to the original input load. These are derived from Abell et al 2019 and Abell et al 2020.
+## Lake equations for changes in input concentrations
+These are the simplified lake equations solved for the change ratio as defined as the new input concentrations (from reductions to to mitigations) to the original input concentrations. These are derived from Abell et al 2019 and Abell et al 2020.
 
 ### TP
 #### Current conditions
@@ -15,7 +15,7 @@ $$
 b = 1 + 0.44 \tau^{0.13}
 $$
 
-$r_{*}$ is the load change ratio, $z_{max}$ is the max depth of the lake in meters, and $\tau$ is the residence time of the lake in years.
+$r_{*}$ is the concentration change ratio, $z_{max}$ is the max depth of the lake in meters, and $\tau$ is the residence time of the lake in years.
 
 Else when $\hspace{2mm} z_{max} \lt= 7.5$:
 
