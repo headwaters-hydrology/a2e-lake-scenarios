@@ -1,5 +1,5 @@
 ## Lake equations for changes in input loads
-These are the simplified lake equations solved for the change ratio as defined as the new input load (from reductions to to mitigations) to the original input load.
+These are the simplified lake equations solved for the change ratio as defined as the new input load (from reductions to to mitigations) to the original input load. These are derived from Abell et al 2019 and Abell et al 2020.
 
 ### TP
 #### Current conditions
