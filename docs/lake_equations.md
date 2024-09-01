@@ -3,7 +3,7 @@ These are the simplified lake equations solved for the change ratio as defined a
 
 ### TP
 #### Current conditions
-$$
+```math
 \underline{TP_{lake}} \\
 \text{when} \hspace{2mm} z_{max} \gt 7.5: \\
 r_{lake} = r_{in}^{1/b} \\
@@ -14,7 +14,7 @@ z_{max} \text{ is the max depth of the lake in meters.} \\
 \tau \text{ is the residence time of the lake in years.} \\
 \text{else when} \hspace{2mm} z_{max} \lt= 7.5: \\
 r_{lake} = r_{in}
-$$
+```
 
 #### "Reference" conditions
 $$
