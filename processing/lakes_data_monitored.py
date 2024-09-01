@@ -438,6 +438,15 @@ def lakes_monitored_conc():
     site_data2.to_file(params.lake_site_data)
     utils.df_to_feather(moni5, params.lake_moni_data)
 
+    moni6 = pd.merge(site_data2[['lawa_id', 'LFENZID']], moni5, on='lawa_id')
+    moni7 = moni6.groupby(['LFENZID', 'indicator', 'date'])['value'].mean()
+    lake_ids = moni7.index.get_level_values(0).unique()
+
+    # Save data for app
+    with booklet.open(params.lake_moni_conc_data_blt, 'n', value_serializer='pickle', key_serializer='uint4', n_buckets=10007) as f:
+        for LFENZID in lake_ids:
+            f[LFENZID] = moni7.loc[LFENZID]
+
     ## Calculate the medians per site and lake
     site_median1 = wq_data2.groupby(['lawa_id', 'indicator'])['value'].median()
 
@@ -445,10 +454,13 @@ def lakes_monitored_conc():
     # lake_median1 = lake_median0.groupby(['LFENZID', 'indicator'])['value'].mean()
     lake_median0.to_csv(params.lake_moni_conc_csv, index=False)
 
-    ## Save data for app
-    with booklet.open(params.lake_moni_conc_blt, 'n', value_serializer='pickle', key_serializer='uint4', n_buckets=10007) as f:
-        for LFENZID, res in lake_median0.groupby('LFENZID'):
-            f[LFENZID] = res.reset_index(drop=True)
+    lake_median1 = lake_median0.groupby(['LFENZID', 'indicator'])['value'].mean()
+    lake_ids = lake_median1.index.get_level_values(0).unique()
+
+    # Save data for app
+    with booklet.open(params.lake_moni_conc_blt, 'n', value_serializer='orjson', key_serializer='uint4', n_buckets=10007) as f:
+        for LFENZID in lake_ids:
+            f[LFENZID] = lake_median1.loc[LFENZID].to_dict()
 
 
 

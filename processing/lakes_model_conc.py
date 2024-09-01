@@ -51,7 +51,7 @@ def process_model_conc_lakes():
     conc1.loc[conc1.indicator.isin(['TN', 'TP', 'NH4N']), 'value'] = (conc1.loc[conc1.indicator.isin(['TN', 'TP', 'NH4N']), 'value'] * 1000).round(2)
     conc1.loc[~conc1.indicator.isin(['TN', 'TP', 'NH4N']), 'value'] = conc1.loc[~conc1.indicator.isin(['TN', 'TP', 'NH4N']), 'value'].round(2)
 
-    ## Save data
+    ## Save data for app
     with booklet.open(params.lake_model_conc_blt, 'n', value_serializer='pickle', key_serializer='uint4', n_buckets=10007) as f:
         for LFENZID, res in conc1.groupby('LFENZID'):
             f[LFENZID] = res.set_index('indicator')['value'].to_dict()

@@ -60,7 +60,7 @@ if __name__ == '__main__':
         futures = {}
         with booklet.open(params.lakes_catch_major_path) as catches:
             for lake_id, catch in catches.items():
-                # if catch_id == 7239092:
+                # if lake_id == 53532:
                 #     d
                 poly = gpd.GeoSeries([catch], crs=4326).to_crs(2193).iloc[0]
 

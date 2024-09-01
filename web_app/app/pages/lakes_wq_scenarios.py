@@ -17,7 +17,6 @@ from dash_extensions.javascript import assign, arrow_function
 import pandas as pd
 import numpy as np
 from copy import deepcopy
-# import tethysts
 import base64
 import geobuf
 import booklet
@@ -156,9 +155,9 @@ def layout():
                         #     'padding': 0,
                         #     },
                         children=[
-                            html.Label('(1) Select a monitoring site on the map:', style={'font-size': param.header_font_size}),
-                            dmc.Text(id='site_name', weight=700, style={'margin-top': 10}),
-                            dmc.Text('(2) Select a measured indicator:', style={'margin-top': param.space_between_content, 'font-size': param.header_font_size}),
+                            html.Label('(1) Select a lake on the map:', style={'font-size': param.header_font_size}),
+                            dmc.Text(id='lake_name', weight=700, style={'margin-top': 10}),
+                            dmc.Text('(2) Select an indicator:', style={'margin-top': param.space_between_content, 'font-size': param.header_font_size}),
                             dcc.Dropdown(options=[], id='indicator', optionHeight=40, clearable=False, style={'margin-bottom': param.space_between_content}),
                             dmc.Group(
                                 [
@@ -215,9 +214,13 @@ def layout():
                                       'width': '50px'},
                                 ],
                                 style_header_conditional=[{
-                                    'if': {'column_id': 'mitigation'},
+                                    'if': {'column_id': 'mitigation_n'},
                                     'font-weight': 'bold'
-                                },
+                                    },
+                                    {
+                                        'if': {'column_id': 'mitigation_p'},
+                                        'font-weight': 'bold'
+                                    },
                                     {
                                     'if': {
                                         'column_id': 'new_land_area'},
@@ -234,44 +237,44 @@ def layout():
 
                                 dmc.Group(
                                     [
-                                        html.Label('(4) Select type of results:', style={'font-size': param.header_font_size}
+                                        html.Label('(4) Results:', style={'font-size': param.header_font_size}
                                             ),
-                                        dmc.HoverCard(
-                                            position='bottom',
-                                            withArrow=True,
-                                            width=250,
-                                            shadow="md",
-                                            openDelay=1000,
-                                            children=[
-                                                dmc.HoverCardTarget(DashIconify(icon="material-symbols:help", width=25)),
-                                                dmc.HoverCardDropdown(
-                                                    dcc.Markdown(
-                                                        """
-                                                        **Indicator** shows the results for the selected indicator, while **Periphyton** shows the results of the Q92 Chla estimate based on the selected indicator. Periphyton cannot be estimated from *E. coli*. See the User Guide for shade definition. The Reference values refer to the median, 5th, and 95th percentiles.
-                                                        """,
-                                                        style={
-                                                            'font-size': 14,
-                                                            }
-                                                        # size="sm",
-                                                    )
-                                                ),
-                                            ],
-                                        ),
+                                        # dmc.HoverCard(
+                                        #     position='bottom',
+                                        #     withArrow=True,
+                                        #     width=250,
+                                        #     shadow="md",
+                                        #     openDelay=1000,
+                                        #     children=[
+                                        #         dmc.HoverCardTarget(DashIconify(icon="material-symbols:help", width=25)),
+                                        #         dmc.HoverCardDropdown(
+                                        #             dcc.Markdown(
+                                        #                 """
+                                        #                 **Indicator** shows the results for the selected indicator, while **Periphyton** shows the results of the Q92 Chla estimate based on the selected indicator. Periphyton cannot be estimated from *E. coli*. See the User Guide for shade definition. The Reference values refer to the median, 5th, and 95th percentiles.
+                                        #                 """,
+                                        #                 style={
+                                        #                     'font-size': 14,
+                                        #                     }
+                                        #                 # size="sm",
+                                        #             )
+                                        #         ),
+                                        #     ],
+                                        # ),
                                         ],
                                     # style={'margin-top': param.space_between_content}
                                     ),
-                                dmc.Tabs(
-                                    [
-                                        dmc.TabsList(
-                                            [
-                                                dmc.Tab('Measured indicator', value='ind'),
-                                                dmc.Tab('Periphyton', value='peri', disabled=True, id='peri_tab'),
-                                            ]
-                                        ),
-                                    ],
-                                    id="results_tabs",
-                                    value='ind',
-                                ),
+                                # dmc.Tabs(
+                                #     [
+                                #         dmc.TabsList(
+                                #             [
+                                #                 dmc.Tab('Measured indicator', value='ind'),
+                                #                 dmc.Tab('Periphyton', value='peri', disabled=True, id='peri_tab'),
+                                #             ]
+                                #         ),
+                                #     ],
+                                #     id="results_tabs",
+                                #     value='ind',
+                                # ),
                                 html.Div(id="stats_tbl",
                                          # style={"paddingTop": 10}
                                          ),
@@ -299,7 +302,8 @@ def layout():
                                     dl.Overlay(dl.LayerGroup(dl.GeoJSON(data='', format="geobuf", id='catch_map', zoomToBoundsOnClick=False, zoomToBounds=True, options=dict(style=catch_style_handle))), name='Catchments', checked=True),
                                     # dl.Overlay(dl.LayerGroup(dl.GeoJSON(data='', format="geobuf", id='marae_map_sites', zoomToBoundsOnClick=False, zoomToBounds=False, options=dict(pointToLayer=draw_marae))), name='Marae', checked=False),
                                     dl.Overlay(dl.LayerGroup(dl.GeoJSON(data='', format="geobuf", id='reach_map', options=dict(style=base_reach_style_handle), hideout={})), name='Rivers', checked=True),
-                                    dl.Overlay(dl.LayerGroup(dl.GeoJSON(url=str(param.rivers_sites_path), format="geobuf", id='sites_map', zoomToBoundsOnClick=True, cluster=True)), name='Monitoring sites', checked=True),
+                                    dl.Overlay(dl.LayerGroup(dl.GeoJSON(data='', format="geobuf", id='lake_poly_map', zoomToBoundsOnClick=True, cluster=False)), name='Lakes', checked=True),
+                                    dl.Overlay(dl.LayerGroup(dl.GeoJSON(url=str(param.lakes_points_path), format="geobuf", id='lakes_points_map', zoomToBoundsOnClick=True, cluster=True)), name='Lakes Points', checked=True),
                                     ],
                                     id='layers'
                                     ),
@@ -338,17 +342,14 @@ def layout():
                         ),
                     ]
                     ),
-            dcc.Store(id='site_id', data=''),
-            dcc.Store(id='nzsegment', data=''),
-            dcc.Store(id='source', data=''),
-            dcc.Store(id='site_data', data={}),
+            dcc.Store(id='lake_id', data=0),
+            # dcc.Store(id='nzsegment', data=''),
+            # dcc.Store(id='source', data=''),
+            dcc.Store(id='lake_data', data=None),
             dcc.Store(id='calc_ready', data=0),
             dcc.Store(id='stats', data=[]),
-            dcc.Store(id='stats_peri_mean', data=[]),
-            dcc.Store(id='stats_peri_upr', data=[]),
             dcc.Store(id='conc_factor', data=1),
             dcc.Store(id='box_plot_fig', data=None),
-            dcc.Store(id='box_plot_fig_peri', data=None),
             ]
         )
 
@@ -358,62 +359,97 @@ def layout():
 ###############################################
 ### Callbacks
 
+# @callback(
+#     Output('lake_id', 'data'),
+#     Output('nzsegment', 'data'),
+#     Output('lake_data', 'data'),
+#     Output('source', 'data'),
+#     [Input('sites_map', 'click_feature')],
+#     prevent_initial_call=True
+#     )
+# def update_lake_id(feature):
+#     """
+
+#     """
+#     lake_id = ''
+#     nzsegment = ''
+#     source = ''
+#     if feature is not None:
+#         if not feature['properties']['cluster']:
+#             lake_id = str(feature['id'])
+#             nzsegment = str(feature['properties']['nzsegment'])
+#             source = feature['properties']['source']
+#             # geometry = feature['geometry']
+
+#     # print(feature)
+#     # print(source)
+
+#     return lake_id, nzsegment, feature, source
+
+
 @callback(
-    Output('site_id', 'data'),
-    Output('nzsegment', 'data'),
-    Output('site_data', 'data'),
-    Output('source', 'data'),
-    [Input('sites_map', 'click_feature')],
-    prevent_initial_call=True
+    Output('lake_id', 'data'),
+    Output('lake_data', 'data'),
+    Output('lake_name', 'children')
+    [Input('lake_points', 'click_feature')]
     )
-def update_site_id(feature):
-    """
-
-    """
-
-    site_id = ''
-    nzsegment = ''
-    source = ''
-    if feature is not None:
-        if not feature['properties']['cluster']:
-            site_id = str(feature['id'])
-            nzsegment = str(feature['properties']['nzsegment'])
-            source = feature['properties']['source']
-            # geometry = feature['geometry']
-
-    # print(feature)
-    # print(source)
-
-    return site_id, nzsegment, feature, source
-
-
-@callback(
-    Output('site_name', 'children'),
-    [Input('site_id', 'data')],
-    prevent_initial_call=True
-    )
-def update_site_name(site_id):
+def update_lake_id(feature):
     """
 
     """
     # print(ds_id)
-    if site_id != '':
-        with booklet.open(param.rivers_sites_names_path) as f:
-            site_name = f[site_id]
+    lake_id = ''
+    if feature is not None:
+        # print(feature)
+        if not feature['properties']['cluster']:
+            lake_id = str(feature['id'])
+            lake_name = feature['properties']['name']
 
-        return site_name
+    return lake_id, feature, lake_name
+
+
+# @callback(
+#     Output('lake_name', 'children'),
+#     [Input('lake_id', 'data')],
+#     prevent_initial_call=True
+#     )
+# def update_site_name(lake_id):
+#     """
+
+#     """
+#     # print(ds_id)
+#     if lake_id != '':
+#         lake_name = utils.get_value(param.lakes_names_path, lake_id)
+
+#         return lake_name
+
+
+@callback(
+        Output('lake_poly_map', 'data'),
+        Input('lake_id', 'data'),
+        )
+# @cache.memoize()
+def update_lake(lake_id):
+    if lake_id > 0:
+        # with booklet.open(param.lakes_poly_gbuf_path, 'r') as f:
+        #     data = base64.b64encode(f[int(lake_id)]).decode()
+
+        data = base64.b64encode(utils.get_value(param.lakes_poly_gbuf_path, lake_id)).decode()
+    else:
+        data = ''
+
+    return data
 
 
 @callback(
         Output('catch_map', 'data'),
-        Input('nzsegment', 'data'),
+        Input('lake_id', 'data'),
         prevent_initial_call=True
         )
 # @cache.memoize()
-def update_catchment(nzsegment):
-    if nzsegment != '':
-        with booklet.open(param.rivers_sites_catch_path, 'r') as f:
-            data = base64.b64encode(f[int(nzsegment)]).decode()
+def update_catchment(lake_id):
+    if lake_id > 0:
+        data = base64.b64encode(utils.get_value(param.lakes_catch_gbuf_path, lake_id)).decode()
 
     else:
         data = ''
@@ -423,14 +459,13 @@ def update_catchment(nzsegment):
 
 @callback(
         Output('reach_map', 'data'),
-        Input('nzsegment', 'data'),
+        Input('lake_id', 'data'),
         prevent_initial_call=True
         )
 # @cache.memoize()
-def update_reaches(nzsegment):
-    if nzsegment != '':
-        with booklet.open(param.rivers_sites_reaches_path, 'r') as f:
-            data = base64.b64encode(f[int(nzsegment)]).decode()
+def update_reaches(lake_id):
+    if lake_id > 0:
+        data = base64.b64encode(utils.get_value(param.lakes_catch_reaches_gbuf_path, lake_id)).decode()
 
     else:
         data = ''
@@ -438,34 +473,19 @@ def update_reaches(nzsegment):
     return data
 
 
-# @callback(
-#         Output('marae_map_sites', 'data'),
-#         Input('catch_id_sites', 'data'),
-#         )
-# def update_marae(catch_id):
-#     if catch_id != '':
-#         with booklet.open(param.rivers_marae_path, 'r') as f:
-#             data = base64.b64encode(f[int(catch_id)]).decode()
-
-#     else:
-#         data = ''
-
-#     return data
-
-
 @callback(
         Output('indicator', 'options'),
         Output('indicator', 'value'),
-        Input('site_id', 'data'),
+        Input('lake_id', 'data'),
         State('indicator', 'value'),
         prevent_initial_call=True
         )
-def update_monitor_sites(site_id, indicator):
+def update_indicators(lake_id, indicator):
     output = []
-    if site_id != '':
-        indicators = utils.get_value(param.rivers_sites_ind_path, site_id)
+    if lake_id > 0:
+        indicators = utils.get_value(param.lakes_ind_path, lake_id)
 
-        output = [{'label': val, 'value': key} for key, val in param.rivers_indicator_dict.items() if key in indicators]
+        output = [{'label': val, 'value': key} for key, val in param.lakes_indicator_dict.items() if key in indicators]
 
         if indicator not in indicators:
             indicator = None
@@ -474,32 +494,18 @@ def update_monitor_sites(site_id, indicator):
 
 
 @callback(
-        Output('peri_tab', 'disabled'),
-        Input('indicator', 'value'),
-        prevent_initial_call=True
-        )
-def update_peri_tab_disabled(indicator):
-    disabled = True
-    if indicator is not None:
-        if indicator != 'ECOLI':
-            disabled = False
-
-    return disabled
-
-
-@callback(
         Output('lc_tbl', 'data'),
         Output('conc_factor', 'data'),
-        Input('site_id', 'data'),
+        Input('lake_id', 'data'),
         Input('indicator', 'value'),
         Input('tbl_reset_btn', 'n_clicks'),
         Input('tbl_calc_btn', 'n_clicks'),
-        State('nzsegment', 'data'),
+        # State('nzsegment', 'data'),
         State('lc_tbl', 'data'),
         State('calc_ready', 'data'),
         prevent_initial_call=True
         )
-def update_mitigation_tbl(site_id, indicator, reset, calc, nzsegment, lc_tbl, calc_ready):
+def update_mitigation_tbl(lake_id, indicator, reset, calc, lc_tbl, calc_ready):
     """
 
     """
@@ -509,8 +515,8 @@ def update_mitigation_tbl(site_id, indicator, reset, calc, nzsegment, lc_tbl, ca
 
     # print(indicator)
 
-    if (site_id != '') and (indicator is not None):
-        lc_tbl, conc_factor = utils.calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, trig)
+    if (lake_id > 0) and (indicator is not None):
+        lc_tbl, conc_factor = utils.calc_scenario_results(lake_id, indicator, lc_tbl, calc_ready, trig)
 
     else:
         lc_tbl = []
@@ -549,7 +555,9 @@ def check_tbl_values(tbl_data):
             if unimprove['mitigation'] != 0:
                 return 0, '**Native Vegetation** lands cannot be mitigated'
 
-        if any((data['mitigation'] < 0) | (data['mitigation'] > 100)):
+        if any((data['mitigation_n'] < 0) | (data['mitigation_n'] > 100)):
+            return 0, "Land mitigation %'s must be >= 0 and <= 100"
+        if any((data['mitigation_p'] < 0) | (data['mitigation_p'] > 100)):
             return 0, "Land mitigation %'s must be >= 0 and <= 100"
         if any(data['new_land_area'] < 0):
             return 0, "New land area %'s must be >= 0"
@@ -568,29 +576,24 @@ def check_tbl_values(tbl_data):
 
 @callback(
         Output('stats', 'data'),
-        Output('stats_peri_mean', 'data'),
-        Output('stats_peri_upr', 'data'),
         Output('dl_btn', 'disabled'),
         Input('calc_ready', 'data'),
         Input('tbl_calc_btn', 'n_clicks'),
-        State('site_id', 'data'),
+        State('lake_id', 'data'),
         State('indicator', 'value'),
-        State('nzsegment', 'data'),
-        State('source', 'data'),
+        # State('nzsegment', 'data'),
+        # State('source', 'data'),
         State('conc_factor', 'data'),
         State('stats', 'data'),
-        State('stats_peri_mean', 'data'),
-        State('stats_peri_upr', 'data'),
         prevent_initial_call=True
         )
-def calc_stats(calc_ready, calc, site_id, indicator, nzsegment, source, conc_factor, stats, stats_peri_mean, stats_peri_upr):
+def calc_stats(calc_ready, calc, lake_id, indicator, conc_factor, stats):
     trig = ctx.triggered_id
 
     # print(stats_tbl)
     # print(source)
 
     disabled = True
-    nps_trig = False
 
     if calc_ready == 1:
         if indicator == 'ECOLI':
@@ -607,11 +610,10 @@ def calc_stats(calc_ready, calc, site_id, indicator, nzsegment, source, conc_fac
         stats = []
 
         if indicator in param.nps_mapping:
-            nps_trig = True
             nps = npsfm.NPSFM(param.assets_path)
             nps_param = param.nps_mapping[indicator]
 
-            limits = nps.add_limits('river', nps_param, int(nzsegment))
+            limits = nps.add_limits('lake', nps_param, 1000010)
             # len_limits = len(limits)
             initial_conc = 0
             for i, band in enumerate(limits):
@@ -635,7 +637,7 @@ def calc_stats(calc_ready, calc, site_id, indicator, nzsegment, source, conc_fac
             stats.append({'name': 'Bottom line', 'conc': bl_str})
 
         ## Ref conc
-        ref_conc0 = utils.get_value(param.rivers_sites_ref_conc_path, nzsegment)
+        ref_conc0 = utils.get_value(param.lakes_ref_conc_path, lake_id)
         ref_conc = ref_conc0[indicator]
         mean1 = round(np.exp(ref_conc['log_mean']), 3)
         p5 = round(np.exp(norm.ppf(0.05, loc=ref_conc['log_mean'], scale=ref_conc['log_stdev'])), 3)
@@ -643,112 +645,46 @@ def calc_stats(calc_ready, calc, site_id, indicator, nzsegment, source, conc_fac
         stats.append({'name': 'Reference', 'conc': results_str2.format(mean1, p5, p95)})
 
         ## Current
-        stats0 = utils.get_value(param.rivers_sites_wq_stats_path, (site_id, indicator))
+        stats0 = utils.get_value(param.lakes_wq_stats_path, (lake_id, indicator))
 
         stats.append({'name': 'Current', 'conc': results_str1.format(round(stats0['median'], 3))})
-
-        ### Periphyton
-        ## mean
-        if indicator != 'ECOLI':
-            stats_peri_mean = []
-            current_mean_peri = utils.calc_peri_mean_conc(indicator, source, stats0['median'])
-            str_vals = ['> 400' if val == 400 else str(val) for val in current_mean_peri]
-            stats_peri_mean.append({'name': 'Current', 'conc_shaded': str(str_vals[0]), 'conc_unshaded': str(str_vals[1])})
-    
-            # NPS states
-            if not nps_trig:
-                nps = npsfm.NPSFM(param.assets_path)
-    
-            limits = nps.add_limits('river', 'Chla', int(nzsegment))
-    
-            bl_limit = nps.bottom_line_limit
-            q = list(bl_limit.keys())[0]
-            bl_str = str(bl_limit[q][1])
-    
-            stats_peri_mean.append({'name': 'Bottom line', 'Q92 Chla (mg/m²)': bl_str})
-    
-            # len_limits = len(limits)
-            initial_conc = 0
-            for i, band in enumerate(limits):
-                val = limits[band][q][1]
-                if val >= 10000:
-                    band_str = f'> {initial_conc}'
-                    stats_peri_mean.append({'name': f'Band {band}', 'Q92 Chla (mg/m²)': band_str})
-                    break
-                else:
-                    band_str = f'{initial_conc} - {val}'
-                    stats_peri_mean.append({'name': f'Band {band}', 'Q92 Chla (mg/m²)': band_str})
-    
-                initial_conc = val
-
-            ## UPR
-            stats_peri_upr = [val for val in stats_peri_mean if ('Band' in val['name']) or ('Bottom' in val['name'])]
-            current_upr_peri = utils.calc_peri_upr_conc(indicator, source, stats0['median'])
-            # upr_flat = current_upr_peri.T.flatten()
-            # str_vals = ['> 400' if val == 400 else str(val) for val in upr_flat]
-            # stats_peri_upr.append({'Current': str_vals})
-            stats_peri_upr.append({'name': 'Current', 'Q92 Chla (mg/m²)': current_upr_peri.T.tolist()})
-
-        else:
-            stats_peri_upr = []
-            stats_peri_mean = []
 
         ### Scenario calcs
         if trig == 'tbl_calc_btn':
             stats.append({'name': 'Scenario', 'conc': results_str1.format(round(stats0['median']*conc_factor, 3))})
 
-            if indicator != 'ECOLI':
-                scenario_mean_peri = utils.calc_peri_mean_conc(indicator, source, stats0['median']*conc_factor)
-                stats_peri_mean.append({'name': 'Scenario', 'conc_shaded': str(scenario_mean_peri[0]), 'conc_unshaded': str(scenario_mean_peri[1])})
-    
-                scenario_upr_peri = utils.calc_peri_upr_conc(indicator, source, stats0['median']*conc_factor)
-                # upr_flat = scenario_upr_peri.T.flatten()
-                # str_vals = ['> 400' if val == 400 else str(val) for val in upr_flat]
-                # stats_peri_upr.append({'Scenario': str_vals})
-                stats_peri_upr.append({'name': 'Scenario', 'Q92 Chla (mg/m²)': scenario_upr_peri.T.tolist()})
-
             disabled = False
         else:
             stats.append({'name': 'Scenario', 'conc': 'Press the Run catchment scenario button'})
-            if indicator != 'ECOLI':
-                stats_peri_mean.append({'name': 'Scenario', 'conc_shaded': 'Press the Run catchment scenario button', 'conc_unshaded': 'Press the Run catchment scenario button'})
 
     else:
         if stats and indicator is not None:
             stats[-1] = {'name': 'Scenario', 'conc': 'Press the Run catchment scenario button'}
-            if indicator != 'ECOLI':
-                stats_peri_mean[-1] = {'name': 'Scenario', 'conc_shaded': 'Press the Run catchment scenario button', 'conc_unshaded': 'Press the Run catchment scenario button'}
+
         else:
             stats = []
 
     # print(stats)
     # print(nzsegment)
 
-    return stats, stats_peri_mean, stats_peri_upr, disabled
+    return stats, disabled
 
 
 @callback(
         Output('stats_tbl', 'children'),
         Input('results_tabs', 'value'),
         Input('stats', 'data'),
-        State('stats_peri_mean', 'data'),
         State('indicator', 'value'),
         prevent_initial_call=True
         )
-def update_stats_table(tab, stats, stats_peri_mean, indicator):
+def update_stats_table(tab, stats, indicator):
 
     stats_tbl_data = []
     # print(tab)
     if stats:
-        if tab == 'ind':
-            for s in stats:
-                if s['name'] in ('Reference', 'Current', 'Scenario'):
-                    stats_tbl_data.append(s)
-        else:
-            # print(stats_peri_mean)
-            for s in stats_peri_mean:
-                if s['name'] in ('Reference', 'Current', 'Scenario'):
-                    stats_tbl_data.append(s)
+        for s in stats:
+            if s['name'] in ('Reference', 'Current', 'Scenario'):
+                stats_tbl_data.append(s)
 
     stats_tbl = utils.make_results_table(stats_tbl_data, tab, indicator)
 
@@ -758,34 +694,15 @@ def update_stats_table(tab, stats, stats_peri_mean, indicator):
 @callback(
         Output('box_plot_fig', 'data'),
         Input('stats', 'data'),
-        State('site_id', 'data'),
+        State('lake_id', 'data'),
         State('indicator', 'value'),
         prevent_initial_call=True
         )
-def update_box_plot_fig(stats, site_id, indicator):
+def update_box_plot_fig(stats, lake_id, indicator):
 
     # print(stats_tbl)
     if stats:
-        fig = utils.make_fig_ind(stats, site_id, indicator)
-    else:
-        fig = None
-
-    box_plot_fig_enc = utils.encode_obj(fig)
-
-    return box_plot_fig_enc
-
-
-@callback(
-        Output('box_plot_fig_peri', 'data'),
-        Input('stats_peri_upr', 'data'),
-        State('site_id', 'data'),
-        prevent_initial_call=True
-        )
-def update_box_plot_fig_peri(stats_peri_upr, site_id):
-
-    # print(stats_tbl)
-    if stats_peri_upr:
-        fig = utils.make_fig_peri(stats_peri_upr, site_id)
+        fig = utils.make_fig_ind(stats, lake_id, indicator)
     else:
         fig = None
 
@@ -798,16 +715,12 @@ def update_box_plot_fig_peri(stats_peri_upr, site_id):
         Output('ts_plot_div', 'children'),
         Input('results_tabs', 'value'),
         Input('box_plot_fig', 'data'),
-        Input('box_plot_fig_peri', 'data'),
         prevent_initial_call=True
         )
-def update_box_plot(tab, box_plot_fig_enc, box_plot_fig_peri_enc):
+def update_box_plot(tab, box_plot_fig_enc):
 
     # print(stats_tbl)
-    if tab == 'ind':
-        fig = utils.decode_obj(box_plot_fig_enc)
-    else:
-        fig = utils.decode_obj(box_plot_fig_peri_enc)
+    fig = utils.decode_obj(box_plot_fig_enc)
 
     return utils.make_graph(fig)
 
@@ -818,18 +731,15 @@ def update_box_plot(tab, box_plot_fig_enc, box_plot_fig_peri_enc):
         # State('ts_plot', 'figure'),
         State('lc_tbl', 'data'),
         State('stats', 'data'),
-        State('stats_peri_mean', 'data'),
-        State('stats_peri_upr', 'data'),
-        State('site_id', 'data'),
-        State('site_name', 'children'),
-        State('nzsegment', 'data'),
+        State('lake_id', 'data'),
+        State('lake_name', 'children'),
+        # State('nzsegment', 'data'),
         State('conc_factor', 'data'),
         State('indicator', 'value'),
-        State('site_data', 'data'),
-        State('box_plot_fig_peri', 'data'),
+        State('lake_data', 'data'),
         prevent_initial_call=True,
         )
-def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, site_id, site_name, nzsegment, conc_factor, indicator, site_data, box_plot_fig_enc):
+def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, indicator, lake_data):
     """
 
     """
@@ -846,7 +756,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
         improve_perc = improve_perc * -1
         improve_text = 'degredation'
 
-    stats0 = utils.get_value(param.rivers_sites_wq_stats_path, (site_id, indicator))
+    stats0 = utils.get_value(param.lakes_wq_stats_path, (lake_id, indicator))
 
     obs_count = stats0['count']
     obs_min_date = stats0['from_date']
@@ -856,38 +766,19 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
     ref_mean, ref_lower, ref_upper = utils.sep_reference_values([s['conc'] for s in stats if s['name'] == 'Reference'][0])
     nps_check = [True for s in stats if s['name'] == 'Bottom line']
 
-    lc_data = utils.get_value(param.sites_lc_red_yields_path, nzsegment).sort_index()
+    lc_data = utils.get_value(param.lakes_lc_red_yields_path, lake_id).sort_index()
     lc_data1 = lc_data[[col for col in lc_data.columns if 'reduction' not in col]].round(2).reset_index().copy()
     lc_data1['area_ha'] = lc_data1['area_ha'].round().astype(int)
     tot_area = lc_data1['area_ha'].sum()
-
-    # Periphyton
-    if indicator != 'ECOLI':
-        peri_best = {val['name']: {'shaded': val['conc_shaded'], 'unshaded': val['conc_unshaded']} for val in stats_peri_mean if val['name'] in ('Current', 'Scenario')}
-        peri_upr = []
-        for val in deepcopy(stats_peri_upr):
-            if val['name'] in ('Current', 'Scenario'):
-                vals = val['Q92 Chla (mg/m²)']
-                vals[0].insert(0, peri_best[val['name']]['shaded'])
-                vals[1].insert(0, peri_best[val['name']]['unshaded'])
-                # vals1 = zip(['best'] + [str(val) for val in param.upr], ['> 400' if val == 400 else str(val) for val in vals[0]], ['> 400' if val == 400 else str(val) for val in vals[1]])
-                peri_upr.append(['> 400' if val == 400 else str(val) for val in vals[0]])
-                peri_upr.append(['> 400' if val == 400 else str(val) for val in vals[1]])
-    
-        peri_upr = list(zip(['best'] + [str(val) for val in param.upr], *peri_upr))
-
-    # b = 0.2
 
     if indicator != 'ECOLI':
         ind_name = param.rivers_indicator_dict[indicator].lower()
     else:
         ind_name = param.rivers_indicator_dict[indicator]
     # river_name = site_data['properties']['Catchment']
-    agency = site_data['properties']['Agency']
+    agency = lake_data['properties']['Agency']
 
-    catch_name = utils.get_value(param.sites_catch_names_path, int(nzsegment))
-
-    box_plot_fig = utils.decode_obj(box_plot_fig_enc)
+    # box_plot_fig = utils.decode_obj(box_plot_fig_enc)
     # print(geometry)
     # geom = orjson.loads(geometry.encode())
 
@@ -895,24 +786,22 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
     fig, ax = plt.subplots()
 
     ## Rivers
-    with booklet.open(param.rivers_sites_reaches_path, 'r') as f:
-        rivers_gbuf = f[int(nzsegment)]
+    lakes_reaches_gbuf = utils.get_value(param.lakes_catch_reaches_gbuf_path, lake_id)
 
-    rivers_dict = geobuf.decode(rivers_gbuf)
-    if rivers_dict is not None:
-        rivers_geo = gpd.GeoDataFrame.from_features(rivers_dict['features'], crs=4326)
+    lakes_reaches_dict = geobuf.decode(lakes_reaches_gbuf)
+    if lakes_reaches_dict is not None:
+        rivers_geo = gpd.GeoDataFrame.from_features(lakes_reaches_dict['features'], crs=4326)
         rivers_geo.plot(ax=ax, alpha=0.3)
 
     ## Catchment
-    with booklet.open(param.rivers_sites_catch_path, 'r') as f:
-        catch_gbuf = f[int(nzsegment)]
+    catch_gbuf = utils.get_value(param.lakes_catch_gbuf_path, lake_id)
 
     catch_dict = geobuf.decode(catch_gbuf)
     catch_geo = gpd.GeoDataFrame.from_features(catch_dict['features'], crs=4326)
     catch_geo.plot(ax=ax, color='lightgrey', edgecolor='black', alpha=0.6)
 
     ## Site location
-    point = gpd.GeoSeries([Point(site_data['geometry']['coordinates'])], crs=4326)
+    point = gpd.GeoSeries([Point(lake_data['geometry']['coordinates'])], crs=4326)
     point.plot(ax=ax, color='black')
     # ax.set_xlim(x_min - b, x_max + b)
     # ax.set_ylim(y_min - b, y_max + b)
@@ -925,7 +814,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
     lc_tbl_dict = {k: l[1] for k, l in param.tbl_cols_dict.items()}
 
     with tempfile.TemporaryDirectory() as path:
-        doc = Document(os.path.join(path, site_id), geometry_options={"right": "2cm", "left": "2cm"})
+        doc = Document(os.path.join(path, lake_id), geometry_options={"right": "2cm", "left": "2cm"})
         doc.packages.append(Package('array'))
         doc.packages.append(Package('datetime2'))
         doc.packages.append(Package('float'))
@@ -934,7 +823,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
         doc.preamble.append(NoEscape(r'\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}'))
         doc.preamble.append(NoEscape(r'\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}'))
 
-        doc.preamble.append(Command('title', f'Scenario builder results for {ind_name} at {site_name}'))
+        doc.preamble.append(Command('title', f'Scenario builder results for {ind_name} at {lake_name}'))
         # doc.preamble.append(catch_name)
         # doc.preamble.append(Command('date', NoEscape(r'\today')))
         # doc.preamble.append(NoEscape(r'\today'))
@@ -942,10 +831,10 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
 
         ## Catchment location section
         with doc.create(Section('Monitoring site and catchment information')):
-            text = f'The user-selected site is named "{site_name}" and monitored by {agency}. The site is also named "{site_id}" by LAWA. It has a River Environmental Classification (REC) network v2.5 segment id of {nzsegment}. '
+            text = f'The user-selected site is named "{lake_name}" and monitored by {agency}. The site is also named "{lake_id}" by DOC. '
 
-            if catch_name != 'Unnamed':
-                text += f'It is located within the larger {catch_name} catchment '
+            # if catch_name != 'Unnamed':
+            #     text += f'It is located within the larger {catch_name} catchment '
 
             doc.append(text)
             doc.append(NoEscape(r'(Figure \ref{fig:catchment}).'))
@@ -1054,44 +943,8 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
             base_tbl.append(data_table)
             # base_tbl.add_caption('Land areas and mitigations')
             base_tbl.append(Command('label', 'tab:yields'))
-    
-            doc.append(base_tbl)
 
-        # 2.2 - Periphyton
-        if indicator != 'ECOLI':
-            sec2b = Subsection('Periphyton')
-            sec_text = f"Periphtyon biomass was estimated from {ind_name}. "
-            sec_text += r"Table \ref{tab:peribio} shows the best estimate and several probability of exceedance (PoE) 92nd percentile biomass (Q92 Chla) estimates for both shaded and unshaded stream conditions. "
-            sec_text += f"The current best estimates are {peri_best['Current']['shaded']} and {peri_best['Current']['unshaded']} mg/m² for shaded and unshaded stream conditions. "
-            # sec_text += r"(Table \ref{tab:peri_bio}). "
-            sec_text += r"Figure \ref{fig:periupr} illustrates the Q92 Chla estimates as they relate to the NPS-FM 2020 bands. "
-            sec2b.append(NoEscape(sec_text))
-            doc.append(sec2b)
-    
-            base_tbl = Table(position="htb")
-            base_tbl.add_caption('Periphyton biomass as Q92 Chla estimates in mg/m². The label "best" under PoE is the mean of the predicted probability distribution. The value "> 400" means that the estimate was greater than 400 mg/m² as this was the limit of the periphyton model.')
-            base_tbl.append(NoEscape(r'\centering'))
-            # data_table = Tabular('| l | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} | R{0.05\linewidth} |')
-            data_table = Tabular('| l | R{0.08\linewidth} | R{0.08\linewidth} | R{0.08\linewidth} | R{0.08\linewidth} |')
-            data_table.add_hline()
-            data_table.add_row(['', MultiColumn(2, align='c|', data='Current'), MultiColumn(2, align='c|', data='Scenario')], strict=False)
-            header = ['PoE (%)', 'Shaded', 'Unshaded', 'Shaded', 'Unshaded']
-            data_table.add_row(header, strict=False)
-            data_table.add_hline()
-            for vals in peri_upr:
-                data_table.add_row(vals, strict=False)
-            data_table.add_hline()
-            base_tbl.append(data_table)
-            base_tbl.append(Command('label', 'tab:peribio'))
-    
             doc.append(base_tbl)
-    
-            plot_path = os.path.join(path, 'peri_upr.png')
-            box_plot_fig.write_image(plot_path)
-            with doc.create(Figure(position='h')) as plot:
-                plot.add_image(plot_path, width=NoEscape(r'0.8\textwidth'))
-                plot.add_caption('Periphyton estimates of the PoE with the associated NPS-FM 2020 bands.')
-                plot.append(Command('label', 'fig:periupr'))
 
         ## Section 3
         sec3 = Section('Scenario outcomes')
@@ -1106,25 +959,14 @@ def make_pdf_report(n_clicks, lc_tbl, stats, stats_peri_mean, stats_peri_upr, si
         sec3a.append(NoEscape(sec_text))
         doc.append(sec3a)
 
-        # Periphyton
-        if indicator != 'ECOLI':
-            sec3b = Subsection('Periphyton')
-            sec_text = r"The scenario outcomes for periphyton are shown in Table \ref{tab:peribio}. "
-            # sec_text += f"The {improve_text} \% for the site is the same as the indicator {improve_text}. "
-            sec_text += f"The resulting Q92 Chla best estimates for the scenario are {peri_best['Scenario']['shaded']} and {peri_best['Scenario']['unshaded']} mg/m² for shaded and unshaded. "
-            sec_text += r"Figure \ref{fig:periupr} also illustrates the PoE Q92 Chla scenario estimates as they relate to the NPS-FM 2020 bands. "
-    
-            sec3b.append(NoEscape(sec_text))
-            doc.append(sec3b)
-
         doc.generate_pdf(clean_tex=True)
 
-        pdf_path = os.path.join(path, site_id + '.pdf')
+        pdf_path = os.path.join(path, f'{lake_id}.pdf')
         with open(pdf_path, 'rb') as f:
             # pdf_bytes = io.BytesIO(f.read())
             pdf_bytes = f.read()
 
-    return dcc.send_bytes(pdf_bytes, site_id + '.pdf', 'pdf')
+    return dcc.send_bytes(pdf_bytes, f'{lake_id}.pdf', 'pdf')
 
 
 

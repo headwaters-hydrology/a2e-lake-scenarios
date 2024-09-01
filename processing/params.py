@@ -29,6 +29,7 @@ indicators = ['CHLA', 'NH4N', 'Secchi', 'TN', 'TP', 'ECOLI']
 
 lake_inflows_gpkg = data_path.joinpath('lake_inflows_segments.gpkg')
 lake_outflows_gpkg = data_path.joinpath('lake_outflows_segments.gpkg')
+lake_outflows_flows_csv = data_path.joinpath('lake_outflows_flows.csv')
 lake_catch_segs_gpkg = data_path.joinpath('lake_catchment_segments.gpkg')
 
 lake_inflows_blt = data_path.joinpath('lake_inflows_segments.blt')
@@ -49,6 +50,8 @@ lake_model_conc_csv = data_path.joinpath('LakeRF_WQModel_Predictions04Feb2022.cs
 lake_model_conc_blt = data_path.joinpath('lake_model_conc_median.blt')
 lake_moni_conc_blt = data_path.joinpath('lake_moni_conc_median.blt')
 lake_moni_conc_csv = data_path.joinpath('lake_moni_conc_median.csv')
+lake_moni_conc_data_blt = data_path.joinpath('lake_moni_conc_data.blt')
+lake_metadata_blt = data_path.joinpath('lake_metadata.blt')
 
 lake_lc_data_csv = data_path.joinpath('lake_land_cover_areas_yields.csv')
 lake_lc_summ_csv = data_path.joinpath('lake_land_cover_summary.csv')
@@ -92,6 +95,13 @@ limnotrack_path = data_path.joinpath('limnotrack')
 lt_reach_data_csv = limnotrack_path.joinpath('reach_data.csv')
 lt_inflows_gpkg = limnotrack_path.joinpath('lake_inflows_limnotrack.gpkg')
 lt_outflows_gpkg = limnotrack_path.joinpath('lake_outflows_limnotrack.gpkg')
+
+## Lakes polygons and points
+lakes_poly_gbuf_path = data_path.joinpath('lake_poly_gbuf.blt')
+lakes_points_gbuf_path = data_path.joinpath('lake_points_gbuf.blt')
+
+lakes_poly_gpkg_path = data_path.joinpath('lake_poly.gpkg')
+lakes_points_gpkg_path = data_path.joinpath('lake_points.gpkg')
 
 ## Reference concs
 rivers_ref_conc3_csv_path = data_path.joinpath('reference_conc_rec_level_3.csv')
@@ -184,8 +194,10 @@ lakes_yields_blt_path = data_path.joinpath('lake_land_cover_yields.blt')
 
 lakes_land_cover_reductions_path = data_path.joinpath('lake_land_cover_reductions.blt')
 lakes_lc_red_yields_path = data_path.joinpath('lake_land_cover_reductions_yields.blt')
+lakes_lc_red_yields_gpkg = data_path.joinpath('lake_land_cover_reductions_yields.gpkg')
 
-lake_land_cover_catch_path = data_path.joinpath('lake_land_cover_per_catch.blt')
+
+lakes_land_cover_catch_path = data_path.joinpath('lake_land_cover_per_catch.blt')
 example_catch_land_cover_path = data_path.joinpath('example_land_cover_base.gpkg')
 example_catch_land_cover_rec_path = data_path.joinpath('example_land_cover_by_rec_watershed.gpkg')
 sites_land_cover_catch_loads_path = data_path.joinpath('sites_land_cover_per_catch_loads.blt')

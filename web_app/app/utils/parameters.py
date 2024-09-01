@@ -39,11 +39,6 @@ rivers_data_app_path = assets_path.joinpath('river_wq_data_for_app.blt')
 
 sites_catch_names_path = assets_path.joinpath('sites_catch_names.blt')
 
-peri_mean_hdf_path = assets_path.joinpath('periphyton_means.h5')
-peri_upr_hdf_path = assets_path.joinpath('periphyton_upr.h5')
-
-ecoli_catch_yields_path = assets_path.joinpath('ecoli_catch_yields.blt')
-
 ## misc params
 lu_order = ['Dairy', 'Sheep and Beef', 'Short-rotation Crop', 'Perennial Crop', 'Forestry', 'Native Vegetation', 'Urban', 'Other']
 
@@ -60,13 +55,6 @@ ecoli_reductions = {
 
 rivers_indicator_dict = {
     'ECOLI': 'E. coli',
-    'DRP': 'Dissolved reactive phosphorus',
-    'NO3N': 'Nitrate nitrogen',
-    'TN': 'Total nitrogen',
-    'TP': 'Total phosphorus'
-    }
-
-peri_indicator_dict = {
     'DRP': 'Dissolved reactive phosphorus',
     'NO3N': 'Nitrate nitrogen',
     'TN': 'Total nitrogen',
