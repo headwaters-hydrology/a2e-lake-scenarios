@@ -3,9 +3,8 @@ These are the simplified lake equations solved for the change ratio as defined a
 
 ### TP
 #### Current conditions
+When $\hspace{2mm} z_{max} \gt 7.5$:
 ```math
-\underline{TP_{lake}} \\
-\text{when} \hspace{2mm} z_{max} \gt 7.5: \\
 r_{lake} = r_{in}^{1/b} \\
 \text{where...} \\
 b = 1 + 0.44 \tau^{0.13} \\
@@ -29,27 +28,23 @@ $$
 ### TN
 #### Current conditions
 $$
-\underline{TN_{lake}}\\
 r_{lake} = r_{in}^{0.54}
 $$
 
 #### "Reference" conditions
 $$
-\underline{TN_{lake}}\\
 r_{lake} = r_{in}^{0.81}
 $$
 
 ### Chla
 #### Current conditions
 $$
-\underline{Chla_{lake}}\\
 r_{lake} = r_{in}^{1.25}\\
 \text{Assuming a fixed ratio between } TN_{lake}/TP_{lake}
 $$
 
 #### "Reference" conditions
 $$
-\underline{Chla_{lake}}\\
 r_{lake} = r_{in}^{1.24}\\
 \text{Assuming a fixed ratio between } TN_{lake}/TP_{lake}
 $$
@@ -57,7 +52,6 @@ $$
 ### Secchi
 #### Current conditions
 $$
-\underline{Secchi_{lake}}\\
 \text{when} \hspace{2mm} z_{max} \gt 20: \\
 r_{lake} = r_{in}^{0.9}\\
 \text{else when} \hspace{2mm} z_{max} \lt= 20: \\
@@ -66,7 +60,6 @@ $$
 
 #### "Reference" conditions
 $$
-\underline{Secchi_{lake}}\\
 r_{lake} = r_{in}^{1.46}
 $$
 
