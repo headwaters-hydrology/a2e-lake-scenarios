@@ -15,7 +15,7 @@ $$
 b = 1 + 0.44 \tau^{0.13}
 $$
 
-$r_{*}$ is the concentration change ratio, $z_{max}$ is the max depth of the lake in meters, and $\tau$ is the residence time of the lake in years.
+$r_{in(P)}$ is the TP concentration change ratio in the inflows to the lake, $r_{lake(P)}$ is the in-lake TP concentration change ratio, $z_{max}$ is the max depth of the lake in meters, and $\tau$ is the residence time of the lake in years.
 
 Else when $\hspace{2mm} z_{max} \lt= 7.5$:
 
