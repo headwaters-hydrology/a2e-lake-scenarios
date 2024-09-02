@@ -74,78 +74,6 @@ def decode_obj(str_obj):
     return d1
 
 
-def calc_peri_mean_conc(indicator, source, conc):
-    """
-
-    """
-    conc1 = conc * 1000
-
-    data = xr.open_dataset(param.peri_mean_hdf_path, engine='h5netcdf', cache=False)
-    data1 = data.sel(indicator=indicator, source=source, drop=True).copy().load()
-    biomass = data1.biomass.values
-    results = np.zeros(2, 'int16')
-    for i, shading in enumerate(('Shaded', 'Unshaded')):
-        x = data1.conc.loc[shading, :].values
-        interp = int(round(np.interp(conc1, x, biomass)))
-        results[i] = interp
-
-    data.close()
-    data1.close()
-
-    return results
-
-
-def calc_peri_upr_conc(indicator, source, conc):
-    """
-
-    """
-    conc1 = conc * 1000
-
-    data = xr.open_dataset(param.peri_upr_hdf_path, engine='h5netcdf', cache=False)
-    data1 = data.sel(indicator=indicator, source=source, drop=True).copy().load()
-    # biomass = np.tile(data1.biomass.values, 7).reshape(7, 5)
-    biomass = data1.biomass.values
-    results = np.zeros((7, 2), 'int16')
-    for i, shading in enumerate(('Shaded', 'Unshaded')):
-        xs = data1.conc.loc[:, shading, :].values
-        for xi, x in enumerate(xs):
-            interp = np.interp(conc1, x, biomass)
-            results[xi, i] = interp
-
-    data.close()
-    data1.close()
-
-    return results
-
-
-def calc_ecoli_load(data):
-    """
-
-    """
-    # data1 = pd.concat([data, mitigation], axis=1)
-    # data1['area_ratio'] = data1['area_ha']/data1['area_ha'].sum()
-    # data1['ecoli_load'] = data1['area_ratio'] * data1['ecoli_factor'] * (1 - data1['mitigation'])
-    grp1 = data.groupby('land_use')
-    current_state0 = grp1['ecoli_load'].sum()
-    current_tot0 = current_state0.sum()
-
-    current_load_perc = (current_state0/current_tot0 * 100).round().astype('int8')
-    sum1 = current_load_perc.sum()
-    if sum1 != 100:
-        diff = 100 - sum1
-        current_load_perc.loc[current_load_perc.idxmax()] = current_load_perc.loc[current_load_perc.idxmax()] + diff
-
-    current_area_perc = (grp1['area_ratio'].sum() * 100).round().astype('int8')
-    sum1 = current_area_perc.sum()
-    if sum1 != 100:
-        diff = 100 - sum1
-        current_area_perc.loc[current_area_perc.idxmax()] = current_area_perc.loc[current_area_perc.idxmax()] + diff
-
-    combo1 = pd.concat([current_area_perc, current_load_perc], axis=1).rename(columns={'ecoli_load': 'ecoli_load_perc'})
-
-    return combo1.reindex(param.lu_order)
-
-
 def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, trig):
     """
 
@@ -538,136 +466,6 @@ def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
     return fig
 
 
-def make_fig_peri(stats_tbl=None, site_id=None):
-    """
-    I need to make a figure this way because of a bug in the reset axes of the figure.
-    """
-    stats1 = pd.DataFrame(stats_tbl).set_index('name')['Q92 Chla (mg/m²)']
-    names = stats1.index
-
-    ymax = 400
-
-    x_len = len(param.upr)
-
-    ## Fig
-    fig = go.Figure()
-
-    ## Add traces
-    # Bands
-    if 'Band A' in names:
-        y_previous = 0
-        for name in names:
-            if 'Band' in name:
-                if 'D' in name:
-                    fig.add_trace(
-                        go.Scatter(
-                            x=param.upr,
-                            y=[ymax - y_previous] * x_len,
-                            mode='lines',
-                            line=dict(width=0.5, color=param.plot_colors[name]),
-                            hoverinfo='name',
-                            name=name,
-                            stackgroup='Bands'
-                            )
-                        )
-                else:
-                    ymax1 = float(stats1[name].split('- ')[1])
-                    ymax_plot = ymax1 - y_previous
-                    y_previous = ymax1
-                    fig.add_trace(
-                        go.Scatter(
-                            x=param.upr,
-                            y=[ymax_plot] * x_len,
-                            mode='lines',
-                            line=dict(width=0.5, color=param.plot_colors[name]),
-                            hoverinfo='name',
-                            name=name,
-                            stackgroup='Bands'
-                            )
-                        )
-
-    # Current
-    current = stats1['Current']
-    fig.add_trace(
-        go.Scatter(
-            x=param.upr,
-            y=current[0],
-            mode='lines',
-            line=dict(
-                dash='dash',
-                width=2,
-                color=param.plot_colors_upr['Current Shaded']
-                ),
-            hoverinfo='name+y',
-            name='Current Shaded',
-            )
-        )
-
-    fig.add_trace(
-        go.Scatter(
-            x=param.upr,
-            y=current[1],
-            mode='lines',
-            line=dict(
-                dash='dash',
-                width=2,
-                color=param.plot_colors_upr['Current Unshaded']
-                ),
-            hoverinfo='name+y',
-            name='Current Unshaded',
-            )
-        )
-
-    # Scenario
-    if 'Scenario' in stats1:
-        scenario = stats1['Scenario']
-        fig.add_trace(
-            go.Scatter(
-                x=param.upr,
-                y=scenario[0],
-                mode='lines',
-                line=dict(
-                    dash='dashdot',
-                    width=2,
-                    color=param.plot_colors_upr['Scenario Shaded']
-                    ),
-                hoverinfo='name+y',
-                name='Scenario Shaded',
-                )
-            )
-        fig.add_trace(
-            go.Scatter(
-                x=param.upr,
-                y=scenario[1],
-                mode='lines',
-                line=dict(
-                    dash='dashdot',
-                    width=2,
-                    color=param.plot_colors_upr['Scenario Unshaded']
-                    ),
-                hoverinfo='name+y',
-                name='Scenario Unshaded',
-                )
-            )
-
-    ## Update layout
-    fig.update_layout(
-        yaxis_title='Q92 Chla (mg/m²)',
-        xaxis_title='Probability of Exceedance (%)',
-        margin=dict(l=20, r=20, t=0, b=60),
-        legend=dict(
-            bgcolor="rgb(220, 220, 220)",
-            bordercolor="Black",
-            borderwidth=1.5,
-            y=0.9,
-            )
-        )
-    fig.update_yaxes(range=[0, ymax])
-    fig.update_xaxes(range=[param.upr[0], param.upr[-1]])
-
-    return fig
-
-
 def make_graph(fig=None):
     """
     I need to make a figure this way because of a bug in the reset axes of the figure.
@@ -676,6 +474,47 @@ def make_graph(fig=None):
         return html.Div(dcc.Graph(id='ts_plot', figure=fig, config={'responsive': True, 'displaylogo': False, 'modeBarButtonsToRemove': ['zoomIn', 'zoomOut', 'select2d', 'lasso2d']}, style={'height': '50vh'}), id='ts_plot_div', style={'width': '100%', 'height': 'auto', 'margin': "auto", "display": "block"})
     else:
         return html.Div(id='ts_plot_div', style={'width': '100%', 'height': 'auto', 'margin': "auto", "display": "block"})
+
+
+def calc_lake_conc_change_ratio(inflow_ratio, indicator, max_depth, residence_time, ref_cond=False):
+    """
+
+    """
+    if indicator == 'TP':
+        if ref_cond:
+            if max_depth > 7.5:
+                b = 1 + 0.27*(residence_time**0.29)
+                r_lake = inflow_ratio**(1/b)
+            else:
+                r_lake = inflow_ratio
+        else:
+            if max_depth > 7.5:
+                b = 1 + 0.44*(residence_time**0.13)
+                r_lake = inflow_ratio**(1/b)
+            else:
+                r_lake = inflow_ratio
+    elif indicator == 'TN':
+        if ref_cond:
+            r_lake = inflow_ratio**0.81
+        else:
+            r_lake = inflow_ratio**0.54
+    elif indicator == 'CHLA':
+        if ref_cond:
+            r_lake = inflow_ratio**1.24
+        else:
+            r_lake = inflow_ratio**1.25
+    elif indicator == 'SECCHI':
+        if ref_cond:
+            r_lake = inflow_ratio**1.46
+        else:
+            if max_depth > 20:
+                r_lake = inflow_ratio**0.9
+            else:
+                r_lake = inflow_ratio**0.38
+    else:
+        raise ValueError('No calc for indicator')
+
+    return r_lake
 
 
 

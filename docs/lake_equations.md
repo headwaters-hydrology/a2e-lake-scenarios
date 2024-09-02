@@ -6,7 +6,7 @@ These are the simplified lake equations solved for the change ratio as defined a
 When $\hspace{2mm} z_{max} \gt 7.5$:
 
 $$
-r_{lake} = r_{in}^{1/b}
+r_{lake} = r_{in(P)}^{1/b}
 $$
 
 where...
@@ -20,14 +20,14 @@ $r_{*}$ is the concentration change ratio, $z_{max}$ is the max depth of the lak
 Else when $\hspace{2mm} z_{max} \lt= 7.5$:
 
 $$
-r_{lake} = r_{in}
+r_{lake} = r_{in(P)}
 $$
 
 #### "Reference" conditions
 When $\hspace{2mm} z_{max} \gt 7.5$:
 
 $$
-r_{lake} = r_{in}^{1/b_{ref}}
+r_{lake} = r_{in(P)}^{1/b_{ref}}
 $$
 
 where...
@@ -39,20 +39,20 @@ $$
 Else when $\hspace{2mm} z_{max} \lt= 7.5$:
 
 $$
-r_{lake} = r_{in}
+r_{lake} = r_{in(P)}
 $$
 
 ### TN
 #### Current conditions
 
 $$
-r_{lake} = r_{in}^{0.54}
+r_{lake} = r_{in(N)}^{0.54}
 $$
 
 #### "Reference" conditions
 
 $$
-r_{lake} = r_{in}^{0.81}
+r_{lake} = r_{in(N)}^{0.81}
 $$
 
 ### Chla
@@ -60,14 +60,26 @@ $$
 Assuming a fixed ratio between $TN_{lake}/TP_{lake}$:
 
 $$
-r_{lake} = r_{in}^{1.25}
+r_{lake} = r_{in(N+P)}^{1.25}
+$$
+
+Without that assumption:
+
+$$
+r_{lake} = r_{in(N)}^{0.7} r_{in(P)}^{0.55}
 $$
 
 #### "Reference" conditions
 Assuming a fixed ratio between $TN_{lake}/TP_{lake}$:
 
 $$
-r_{lake} = r_{in}^{1.24}
+r_{lake} = r_{in(N+P)}^{1.24}
+$$
+
+Without that assumption:
+
+$$
+r_{lake} = r_{in(N)}^{0.65} r_{in(P)}^{0.59}
 $$
 
 ### Secchi
@@ -75,19 +87,19 @@ $$
 When $\hspace{2mm} z_{max} \gt 20$:
 
 $$
-r_{lake} = r_{in}^{0.9}
+r_{lake} = r_{in(Chla)}^{0.9}
 $$
 
 Else when $\hspace{2mm} z_{max} \lt= 20$:
 
 $$
-r_{lake} = r_{in}^{0.38}
+r_{lake} = r_{in(Chla)}^{0.38}
 $$
 
 #### "Reference" conditions
 
 $$
-r_{lake} = r_{in}^{1.46}
+r_{lake} = r_{in(Chla)}^{1.46}
 $$
 
 
