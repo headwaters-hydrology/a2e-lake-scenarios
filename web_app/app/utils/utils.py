@@ -476,7 +476,7 @@ def make_graph(fig=None):
         return html.Div(id='ts_plot_div', style={'width': '100%', 'height': 'auto', 'margin': "auto", "display": "block"})
 
 
-def calc_lake_conc_change_ratio(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, residence_time, ref_cond=False):
+def calc_lake_conc_change(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, residence_time, ref_cond=False):
     """
 
     """

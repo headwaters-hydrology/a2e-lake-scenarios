@@ -1,5 +1,24 @@
-## Lake equations for changes in input concentrations
-These are the simplified lake equations solved for the change ratio as defined as the new input concentrations (from reductions to to mitigations) to the original input concentrations. These are derived from Abell et al 2019 and Abell et al 2020.
+# Lake equations for changes in input concentrations
+These are the simplified lake equations solved for the change ratio as defined as the new input concentrations (from reductions to mitigations) to the original input concentrations. These are derived from Abell et al 2019 and Abell et al 2020.
+
+### Definition of the change ratio
+
+$$
+r_{in(*)} = \frac{C_{in(*)}^{scenario}}{C_{in(*)}^{current}}
+$$
+
+where...
+
+$C_{in(*)}^{scenario}$ is the inflow concentration of either TN or TP in the scenario (with the mitigations) and $C_{in(*)}^{current}$ is the inflow concentration of either TN or TP in the current conditions.
+
+### Application of the lake change ratios
+Once a calculation of $r_{lake(*)}$ has been made, then you need to multiply it by the current lake concentration ($C_{lake(*)}^{current}$) to get the scenario lake concentration ($C_{lake(*)}^{scenario}$):
+
+$$
+C_{lake(*)}^{scenario} = r_{lake(*)} C_{lake(*)}^{current}
+$$
+
+## Change ratios
 
 ### TP
 #### Current conditions
