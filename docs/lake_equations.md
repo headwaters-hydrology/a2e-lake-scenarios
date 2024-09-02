@@ -99,7 +99,7 @@ $$
 #### "Reference" conditions
 
 $$
-r_{lake(Secchi)} = r_{in(Chla)}^{1.46}
+r_{lake(Secchi)} = r_{lake(Chla)}^{1.46}
 $$
 
 
