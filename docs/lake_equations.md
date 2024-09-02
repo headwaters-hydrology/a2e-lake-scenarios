@@ -60,26 +60,26 @@ $$
 Assuming a fixed ratio between $TN_{lake}/TP_{lake}$:
 
 $$
-r_{lake(Chla)} = r_{in(N+P)}^{1.25}
+r_{lake(Chla)} = r_{lake(N+P)}^{1.25}
 $$
 
 Without that assumption:
 
 $$
-r_{lake(Chla)} = r_{in(N)}^{0.7} r_{in(P)}^{0.55}
+r_{lake(Chla)} = r_{lake(N)}^{0.7} r_{lake(P)}^{0.55}
 $$
 
 #### "Reference" conditions
 Assuming a fixed ratio between $TN_{lake}/TP_{lake}$:
 
 $$
-r_{lake(Chla)} = r_{in(N+P)}^{1.24}
+r_{lake(Chla)} = r_{lake(N+P)}^{1.24}
 $$
 
 Without that assumption:
 
 $$
-r_{lake(Chla)} = r_{in(N)}^{0.65} r_{in(P)}^{0.59}
+r_{lake(Chla)} = r_{lake(N)}^{0.65} r_{lake(P)}^{0.59}
 $$
 
 ### Secchi
@@ -87,13 +87,13 @@ $$
 When $\hspace{2mm} z_{max} \gt 20$:
 
 $$
-r_{lake(Secchi)} = r_{in(Chla)}^{0.9}
+r_{lake(Secchi)} = r_{lake(Chla)}^{0.9}
 $$
 
 Else when $\hspace{2mm} z_{max} \lt= 20$:
 
 $$
-r_{lake(Secchi)} = r_{in(Chla)}^{0.38}
+r_{lake(Secchi)} = r_{lake(Chla)}^{0.38}
 $$
 
 #### "Reference" conditions
