@@ -57,26 +57,12 @@ $$
 
 ### Chla
 #### Current conditions
-Assuming a fixed ratio between $TN_{lake}/TP_{lake}$:
-
-$$
-r_{lake(Chla)} = r_{lake(N+P)}^{1.25}
-$$
-
-Without that assumption:
 
 $$
 r_{lake(Chla)} = r_{lake(N)}^{0.7} r_{lake(P)}^{0.55}
 $$
 
 #### "Reference" conditions
-Assuming a fixed ratio between $TN_{lake}/TP_{lake}$:
-
-$$
-r_{lake(Chla)} = r_{lake(N+P)}^{1.24}
-$$
-
-Without that assumption:
 
 $$
 r_{lake(Chla)} = r_{lake(N)}^{0.65} r_{lake(P)}^{0.59}

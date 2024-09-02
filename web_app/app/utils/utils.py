@@ -476,45 +476,53 @@ def make_graph(fig=None):
         return html.Div(id='ts_plot_div', style={'width': '100%', 'height': 'auto', 'margin': "auto", "display": "block"})
 
 
-def calc_lake_conc_change_ratio(inflow_ratio, indicator, max_depth, residence_time, ref_cond=False):
+def calc_lake_conc_change_ratio(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, residence_time, ref_cond=False):
     """
 
     """
-    if indicator == 'TP':
+    if indicator in ('TP', 'CHLA', 'SECCHI'):
         if ref_cond:
             if max_depth > 7.5:
                 b = 1 + 0.27*(residence_time**0.29)
-                r_lake = inflow_ratio**(1/b)
+                r_lake_p = inflow_ratio_p**(1/b)
             else:
-                r_lake = inflow_ratio
+                r_lake_p = inflow_ratio_p
         else:
             if max_depth > 7.5:
                 b = 1 + 0.44*(residence_time**0.13)
-                r_lake = inflow_ratio**(1/b)
+                r_lake_p = inflow_ratio_p**(1/b)
             else:
-                r_lake = inflow_ratio
+                r_lake_p = inflow_ratio_p
+
+    if indicator in ('TN', 'CHLA', 'SECCHI'):
+        if ref_cond:
+            r_lake_n = inflow_ratio_n**0.81
+        else:
+            r_lake_n = inflow_ratio_n**0.54
+
+    if indicator in ('CHLA', 'SECCHI'):
+        if ref_cond:
+            r_lake_chla = (r_lake_n**0.7) * (r_lake_p**0.55)
+        else:
+            r_lake_chla = (r_lake_n**0.65) * (r_lake_p**0.59)
+
+    if indicator == 'TP':
+        return r_lake_p
     elif indicator == 'TN':
-        if ref_cond:
-            r_lake = inflow_ratio**0.81
-        else:
-            r_lake = inflow_ratio**0.54
+        return r_lake_n
     elif indicator == 'CHLA':
-        if ref_cond:
-            r_lake = inflow_ratio**1.24
-        else:
-            r_lake = inflow_ratio**1.25
+        return r_lake_chla
     elif indicator == 'SECCHI':
         if ref_cond:
-            r_lake = inflow_ratio**1.46
+            r_lake = r_lake_chla**1.46
         else:
             if max_depth > 20:
-                r_lake = inflow_ratio**0.9
+                r_lake = r_lake_chla**0.9
             else:
-                r_lake = inflow_ratio**0.38
+                r_lake = r_lake_chla**0.38
+        return r_lake
     else:
         raise ValueError('No calc for indicator')
-
-    return r_lake
 
 
 
