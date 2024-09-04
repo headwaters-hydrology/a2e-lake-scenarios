@@ -18,10 +18,62 @@ $$
 C_{lake()}^{scenario} = r_{lake()} C_{lake()}^{current}
 $$
 
+### Examples
+Each of the following equations will have examples using actual data to compare the results of the simplified equations to the original Abell equations.
+
+The source data variables include:
+
+$$
+C_{in(P)}^{current} = 100 \space \frac{mg}{m^3}
+$$
+
+$$
+C_{in(P)}^{scenario} = 40 \space \frac{mg}{m^3}
+$$
+
+$$
+C_{in(N)}^{current} = 4000 \space \frac{mg}{m^3}
+$$
+
+$$
+C_{in(N)}^{scenario} = 800 \space \frac{mg}{m^3}
+$$
+
+$$
+z_{max} = 20 \space m
+$$
+
+$$
+\tau = 10 \space years
+$$
+
+subsequently...
+
+$$
+r_{in(P)} = \frac{0.04}{0.1} = 0.4
+$$
+
+$$
+r_{in(N)} = \frac{0.8}{4} = 0.2
+$$
+
 ## Change ratios
 
 ### TP
-#### Current conditions
+#### Original equation
+When $\hspace{2mm} z_{max} \gt 7.5$:
+
+$$
+\log_{10} C_{lake(P)} = \frac{\log_{10} C_{in(P)}}{1 + 0.44\tau^{0.13}}
+$$
+
+else:
+
+$$
+\log_{10} C_{lake(P)} = \log_{10} C_{in(P)}
+$$
+
+#### Simplified equations
 When $\hspace{2mm} z_{max} \gt 7.5$:
 
 $$
@@ -42,73 +94,167 @@ $$
 r_{lake(P)} = r_{in(P)}
 $$
 
-#### "Reference" conditions
-When $\hspace{2mm} z_{max} \gt 7.5$:
+#### Example
 
 $$
-r_{lake(P)} = r_{in(P)}^{1/b_{ref}}
+b = 1 + 0.44 \times 10^{0.13} = 1.5935
 $$
 
-where...
-
 $$
-b_{ref} = 1 + 0.27 \tau^{0.29}
+\log_{10} C_{lake(P)}^{current} = \frac{\log_{10} 100}{1.5935} = 1.255
 $$
 
-Else when $\hspace{2mm} z_{max} \lt= 7.5$:
+$$
+C_{lake(P)}^{current} = 10^{1.255} = 18
+$$
 
 $$
-r_{lake(P)} = r_{in(P)}
+\log_{10} C_{lake(P)}^{scenario} = \frac{\log_{10} 40}{1.5935} = 1.005
+$$
+
+$$
+C_{lake(P)}^{scenario} = 10^{1.005} = 10.124
+$$
+
+$$
+\frac{C_{lake(P)}^{scenario}}{C_{lake(P)}^{current}}= \frac{10.124}{18} = 0.5625
+$$
+
+$$
+r_{lake(P)} = 0.4^{1/1.5935} = 0.562
 $$
 
 ### TN
-#### Current conditions
+#### Original equation
+
+$$
+\log_{10} C_{lake(P)} = 1.6 + 0.54 \log_{10} C_{in(N)} - 0.41 \log_{10} z_{max}
+$$
+
+#### Simplified equation
 
 $$
 r_{lake(N)} = r_{in(N)}^{0.54}
 $$
 
-#### "Reference" conditions
+#### Example
 
 $$
-r_{lake(N)} = r_{in(N)}^{0.81}
+\log_{10} C_{lake(N)}^{current} = 1.6 + 0.54 \log_{10} 4000 - 0.41 \log_{10} 20  = 3.012
+$$
+
+$$
+C_{lake(N)}^{current} = 10^{3.012} = 1028
+$$
+
+$$
+\log_{10} C_{lake(N)}^{scenario} = 1.6 + 0.54 \log_{10} 800 - 0.41 \log_{10} 20  = 2.634
+$$
+
+$$
+C_{lake(N)}^{scenario} = 10^{2.634} = 430.5
+$$
+
+$$
+\frac{C_{lake(N)}^{scenario}}{C_{lake(N)}^{current}} = \frac{430.5}{1028} = 0.419
+$$
+
+$$
+r_{lake(N)} = 0.2^{0.54} = 0.419
 $$
 
 ### Chla
-#### Current conditions
+#### Original equation
+
+$$
+\log_{10} C_{lake(Chla)} = -1.8 + 0.7 \log_{10} C_{lake(N)} + 0.55 \log_{10} C_{lake(P)}
+$$
+
+#### Simplified equation
 
 $$
 r_{lake(Chla)} = r_{lake(N)}^{0.7} r_{lake(P)}^{0.55}
 $$
 
-#### "Reference" conditions
+#### Example
 
 $$
-r_{lake(Chla)} = r_{lake(N)}^{0.65} r_{lake(P)}^{0.59}
+\log_{10} C_{lake(Chla)}^{current} = -1.8 + 0.7 \times 3.012 + 0.55 \times 1.255 = 0.999
+$$
+
+$$
+C_{lake(Chla)}^{current} = 10^{0.999} = 9.977
+$$
+
+$$
+\log_{10} C_{lake(Chla)}^{scenario} = -1.8 + 0.7 \times 2.634 + 0.55 \times 1.005 = 0.5965
+$$
+
+$$
+C_{lake(Chla)}^{scenario} = 10^{0.5965} = 3.949
+$$
+
+$$
+\frac{C_{lake(Chla)}^{scenario}}{C_{lake(Chla)}^{current}} = \frac{3.949}{9.977} = 0.396
+$$
+
+$$
+r_{lake(Chla)} = 0.419^{0.7} 0.562^{0.55} = 0.396
 $$
 
 ### Secchi
-#### Current conditions
-When $\hspace{2mm} z_{max} \gt 20$:
+#### Original equation
+When $\hspace{2mm} z_{max} \geq 20$:
+
+$$
+D_{lake(Secchi)}^{0.5} = 3.46 - 1.53 \log_{10} C_{lake(Chla)}
+$$
+
+else:
+
+$$
+D_{lake(Secchi)}^{0.5} = 3.46 - 0.74 \log_{10} C_{lake(Chla)} - 0.35 \log_{10} \frac{Fetch U^2}{z_{max}}
+$$
+
+#### Simplified equations
+
+When $\hspace{2mm} z_{max} \geq 20$:
 
 $$
 r_{lake(Secchi)} = r_{lake(Chla)}^{0.9}
 $$
 
-Else when $\hspace{2mm} z_{max} \lt= 20$:
+Else when $\hspace{2mm} z_{max} \lt 20$:
 
 $$
 r_{lake(Secchi)} = r_{lake(Chla)}^{0.38}
 $$
 
-#### "Reference" conditions
+#### Example
 
 $$
-r_{lake(Secchi)} = r_{lake(Chla)}^{1.46}
+\sqrt D_{lake(Secchi)}^{current} = 3.46 - 1.53 \times 0.999 = 1.931
 $$
 
+$$
+D_{lake(Secchi)}^{current} = 1.931^2 = 3.729
+$$
 
+$$
+\sqrt D_{lake(Secchi)}^{scenario} = 3.46 - 1.53 \times 0.5965 = 2.547
+$$
 
+$$
+D_{lake(Secchi)}^{scenario} = 2.547^2 = 6.487
+$$
+
+$$
+\frac{D_{lake(Secchi)}^{scenario}}{D_{lake(Secchi)}^{current}} = \frac{6.487}{3.729} = 1.734
+$$
+
+$$
+r_{lake(Secchi)} = 0.396^{0.9} = 0.4344
+$$
 
 
 

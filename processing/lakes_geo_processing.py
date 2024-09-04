@@ -37,7 +37,9 @@ model_cols = cat_cols + num_cols
 def lakes_points_poly_process():
 
     ## Lakes polygons
-    lakes_poly0 = gpd.read_file(params.lakes_poly_path)
+    lakes_poly0 = gpd.read_file(params.lakes_poly_path)[['LFENZID', 'Name', 'ResidenceTime', 'MaxDepth', 'LakeVolume', 'LakeAreaHa', 'geometry']].rename(columns={'Name': 'name', 'ResidenceTime': 'residence_time', 'MaxDepth': 'max_depth', 'LakeVolume': 'volume', 'LakeAreaHa': 'area_ha'}).copy()
+    lakes_catch0 = gpd.read_file(params.lakes_catch_path)[['LID', 'catFlow']].rename(columns={'LID': 'LFENZID', 'catFlow': 'flow'})
+    lakes_poly0 = lakes_poly0.merge(lakes_catch0, on='LFENZID')
 
     with booklet.open(params.lakes_reach_gbuf_path) as f:
         lake_ids = list(f.keys())
@@ -46,37 +48,38 @@ def lakes_points_poly_process():
     lakes_poly0['LFENZID'] = lakes_poly0['LFENZID'].astype('int32')
 
     lakes_poly0['geometry'] = lakes_poly0.buffer(0).simplify(20).make_valid()
-    lakes_poly0.loc[lakes_poly0.Name == 'Lake Ototoa', 'LFENZID'] = 50270
+    lakes_poly0.loc[lakes_poly0.name == 'Lake Ototoa', 'LFENZID'] = 50270
 
-    lakes_poly0 = lakes_poly0.rename(columns={'Name': 'name', 'ResidenceTime': 'residence_time', 'MaxDepth': 'max_depth'})
     lakes_poly0 = lakes_poly0.dropna(subset=['LFENZID']).copy()
-    lakes_poly0.loc[lakes_poly0['residence_time'].isnull(), 'residence_time'] = lakes_poly0['residence_time'].median()
-    lakes_poly0.loc[lakes_poly0['residence_time'] < 1, 'residence_time'] = 1
-    lakes_poly0['residence_time'] = lakes_poly0['residence_time'].round().astype('int32')
-    lakes_poly0.loc[lakes_poly0['max_depth'].isnull(), 'max_depth'] = lakes_poly0['max_depth'].median()
-    lakes_poly0.loc[lakes_poly0['max_depth'] < 1, 'max_depth'] = 1
-    lakes_poly0['max_depth'] = lakes_poly0['max_depth'].round().astype('int32')
+    lakes_poly0['residence_time'] = lakes_poly0['volume']/lakes_poly0['flow'] * 365
+    # lakes_poly0.loc[lakes_poly0['residence_time'] < 1, 'residence_time'] = 1
+    # lakes_poly0['residence_time'] = lakes_poly0['residence_time'].round().astype('int32')
+    # lakes_poly0.loc[lakes_poly0['max_depth'].isnull(), 'max_depth'] = lakes_poly0['max_depth'].median()
+    # lakes_poly0.loc[lakes_poly0['max_depth'] < 1, 'max_depth'] = 1
+    # lakes_poly0['max_depth'] = lakes_poly0['max_depth'].round().astype('int32')
     lakes_poly0.loc[lakes_poly0.name.isnull(), 'name'] = 'No name'
 
-    lakes_poly0['mean_depth'] = lakes_poly0.LakeVolume / lakes_poly0.LakeAreaHa / 10000
-    lakes_poly0['p_residence_time'] = np.sqrt(lakes_poly0.residence_time)/(1 + np.sqrt(lakes_poly0.residence_time))
-    lakes_poly0['n_residence_time'] = 1 - np.exp((-6.83 - lakes_poly0.residence_time)/(lakes_poly0.mean_depth))
+    lakes_poly1 = lakes_poly0[lakes_poly0.residence_time.notnull() & lakes_poly0.max_depth.notnull()].copy()
 
-    lakes_poly0 = lakes_poly0.drop_duplicates(subset=['LFENZID'])
+    lakes_poly1['mean_depth'] = lakes_poly1.volume / lakes_poly1.area_ha / 10000
+    lakes_poly1['p_residence_time'] = np.sqrt(lakes_poly1.residence_time)/(1 + np.sqrt(lakes_poly1.residence_time))
+    lakes_poly1['n_residence_time'] = 1 - np.exp((-6.83 - lakes_poly1.residence_time)/(lakes_poly1.mean_depth))
 
-    lakes_poly1 = lakes_poly0.loc[lakes_poly0.LFENZID.isin(lake_ids), ['LFENZID', 'name', 'residence_time', 'max_depth', 'mean_depth', 'p_residence_time', 'n_residence_time', 'geometry']].reset_index(drop=True).copy()
+    lakes_poly1 = lakes_poly1.drop_duplicates(subset=['LFENZID'])
+
+    lakes_poly2 = lakes_poly1.loc[lakes_poly0.LFENZID.isin(lake_ids), ['LFENZID', 'name', 'residence_time', 'max_depth', 'mean_depth', 'p_residence_time', 'n_residence_time', 'geometry']].reset_index(drop=True).copy()
 
     with booklet.open(params.lakes_poly_gbuf_path, 'n', value_serializer='zstd', key_serializer='uint2', n_buckets=4001) as s:
-        for LFENZID in lakes_poly1.LFENZID:
-            geo = lakes_poly1[lakes_poly1.LFENZID == LFENZID].to_crs(4326).set_index('LFENZID', drop=False).__geo_interface__
+        for LFENZID in lakes_poly2.LFENZID:
+            geo = lakes_poly2[lakes_poly2.LFENZID == LFENZID].to_crs(4326).set_index('LFENZID', drop=False).__geo_interface__
             gbuf = geobuf.encode(geo)
             s[LFENZID] = gbuf
 
-    lakes_poly1.to_file(params.lakes_poly_gpkg_path, index=False)
+    lakes_poly2.to_file(params.lakes_poly_gpkg_path, index=False)
 
     ## Point locations of lakes
     # All lakes
-    sites = lakes_poly1.copy()
+    sites = lakes_poly2.copy()
     sites['geometry'] = sites.geometry.centroid.to_crs(4326)
 
     sites_geo = sites.set_index('LFENZID').__geo_interface__

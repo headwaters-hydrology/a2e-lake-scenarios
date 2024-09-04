@@ -22,6 +22,7 @@ nzrec_data_path = '/home/mike/git/nzrec/data'
 rec_rivers_feather = data_path.joinpath('rec25_rivers_clean.feather')
 
 lakes_poly_path = data_path.joinpath('lake_polygons_fenz.gpkg')
+lakes_catch_path = data_path.joinpath('FENZ_v1_LakeCatchments.shp')
 
 
 ### Loads/concs

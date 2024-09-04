@@ -82,12 +82,12 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
 
     if indicator != 'ECOLI':
         data = get_value(param.sites_lc_red_yields_path, nzsegment).reindex(param.lu_order)
-    
+
         if indicator in ('DRP', 'TP'):
             name = 'phosphorus_'
         elif indicator in ('NO3N', 'TN'):
             name = 'nitrogen_'
-    
+
         # cols = ['land_cover', 'area_ha']
         # up_cols = ['land_cover', 'area_ha']
         cols = ['area_ha']
@@ -96,11 +96,11 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
             if name in col:
                 cols.append(col)
                 up_cols.append(col[len(name):])
-    
+
         data0 = data[cols].copy()
         data0.columns = up_cols
         # data0 = data0.set_index('land_cover')
-    
+
         if (trig == 'tbl_calc_btn') and (calc_ready == 1):
             data = pd.DataFrame(lc_tbl).set_index('land_cover').astype('int16')
             data2 = pd.concat([data0, data], axis=1)
@@ -109,7 +109,7 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
             data2['new_load'] = ((new_contrib/new_contrib.sum()) * 100).astype('int8')
             old_contrib = data2['yield']*data2['land_area']
             conc_factor = new_contrib.sum()/old_contrib.sum()
-    
+
             old_tbl_data = deepcopy(lc_tbl)
             lc_tbl = []
             for ld in old_tbl_data:
@@ -124,7 +124,7 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
             if sum1 != 100:
                 diff = 100 - sum1
                 area_perc.loc[area_perc.idxmax()] = area_perc.loc[area_perc.idxmax()] + diff
-    
+
             mass_ish = (data0['yield']*area_perc)
             tot_mass = mass_ish.sum()
             mass_perc = ((mass_ish/tot_mass) * 100).round().astype('int8')
@@ -133,11 +133,11 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
                 diff = 100 - sum1
                 mass_perc.loc[mass_perc.idxmax()] = mass_perc.loc[mass_perc.idxmax()] + diff
             reductions = data0['reduction'].round()
-    
+
             lc_tbl = []
             for i, lc in enumerate(data0.index):
                 dict1 = {'land_cover': lc, 'land_area': area_perc[i], 'load': mass_perc[i], 'mitigation': reductions[i], 'new_land_area': area_perc[i]}
-    
+
                 lc_tbl.append(dict1)
 
     else:
@@ -221,7 +221,7 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
             lc_tbl = []
             for lc, row in combo2.iterrows():
                 dict1 = {'land_cover': lc, 'land_area': row['area_ratio'], 'load': row['ecoli_load_perc'], 'mitigation': int(param.ecoli_reductions[lc] * 100), 'new_land_area': row['area_ratio']}
-    
+
                 lc_tbl.append(dict1)
 
     return lc_tbl, conc_factor
@@ -476,35 +476,22 @@ def make_graph(fig=None):
         return html.Div(id='ts_plot_div', style={'width': '100%', 'height': 'auto', 'margin': "auto", "display": "block"})
 
 
-def calc_lake_conc_change(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, residence_time, ref_cond=False):
+def calc_lake_conc_change(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, residence_time):
     """
 
     """
     if indicator in ('TP', 'CHLA', 'SECCHI'):
-        if ref_cond:
-            if max_depth > 7.5:
-                b = 1 + 0.27*(residence_time**0.29)
-                r_lake_p = inflow_ratio_p**(1/b)
-            else:
-                r_lake_p = inflow_ratio_p
+        if max_depth > 7.5:
+            b = 1 + 0.44*(residence_time**0.13)
+            r_lake_p = inflow_ratio_p**(1/b)
         else:
-            if max_depth > 7.5:
-                b = 1 + 0.44*(residence_time**0.13)
-                r_lake_p = inflow_ratio_p**(1/b)
-            else:
-                r_lake_p = inflow_ratio_p
+            r_lake_p = inflow_ratio_p
 
     if indicator in ('TN', 'CHLA', 'SECCHI'):
-        if ref_cond:
-            r_lake_n = inflow_ratio_n**0.81
-        else:
-            r_lake_n = inflow_ratio_n**0.54
+        r_lake_n = inflow_ratio_n**0.54
 
     if indicator in ('CHLA', 'SECCHI'):
-        if ref_cond:
-            r_lake_chla = (r_lake_n**0.7) * (r_lake_p**0.55)
-        else:
-            r_lake_chla = (r_lake_n**0.65) * (r_lake_p**0.59)
+        r_lake_chla = (r_lake_n**0.65) * (r_lake_p**0.59)
 
     if indicator == 'TP':
         return r_lake_p
@@ -513,13 +500,10 @@ def calc_lake_conc_change(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, 
     elif indicator == 'CHLA':
         return r_lake_chla
     elif indicator == 'SECCHI':
-        if ref_cond:
-            r_lake = r_lake_chla**1.46
+        if max_depth >= 20:
+            r_lake = r_lake_chla**0.9
         else:
-            if max_depth > 20:
-                r_lake = r_lake_chla**0.9
-            else:
-                r_lake = r_lake_chla**0.38
+            r_lake = r_lake_chla**0.38
         return r_lake
     else:
         raise ValueError('No calc for indicator')
