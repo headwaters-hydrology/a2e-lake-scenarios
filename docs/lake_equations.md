@@ -216,18 +216,18 @@ $$
 D_{lake(Secchi)}^{0.5} = 3.46 - 0.74 \log_{10} C_{lake(Chla)} - 0.35 \log_{10} \frac{Fetch U^2}{z_{max}}
 $$
 
-#### Simplified equations
+#### Rearranged equations
 
 When $\hspace{2mm} z_{max} \geq 20$:
 
 $$
-r_{lake(Secchi)} = r_{lake(Chla)}^{0.9}
+D_{lake(Secchi)}^{scenario} = (\log_{10} (r_{lake(Chla)}^{-1.53}) + (D_{lake(Secchi)}^{current})^{0.5})^2
 $$
 
 Else when $\hspace{2mm} z_{max} \lt 20$:
 
 $$
-r_{lake(Secchi)} = r_{lake(Chla)}^{0.38}
+D_{lake(Secchi)}^{scenario} = (\log_{10} (r_{lake(Chla)}^{-0.74}) + (D_{lake(Secchi)}^{current})^{0.5})^2
 $$
 
 #### Example
@@ -253,7 +253,7 @@ $$
 $$
 
 $$
-r_{lake(Secchi)} = 0.396^{0.9} = 0.4344 ?
+D_{lake(Secchi)}^{scenario} = (\log_{10} (0.396^{-1.53}) + 3.729^{0.5})^2 = 6.487
 $$
 
 
