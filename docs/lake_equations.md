@@ -216,7 +216,7 @@ $$
 D_{lake(Secchi)}^{0.5} = 3.46 - 0.74 \log_{10} C_{lake(Chla)} - 0.35 \log_{10} \frac{Fetch U^2}{z_{max}}
 $$
 
-#### Rearranged equations
+#### Simplified equations
 
 When $\hspace{2mm} z_{max} \geq 20$:
 
@@ -257,16 +257,68 @@ D_{lake(Secchi)}^{scenario} = (\log_{10} (0.396^{-1.53}) + 3.729^{0.5})^2 = 6.48
 $$
 
 
+## Waikato and Canterbury are special
+### TP Waikato
 
+$$
+b = 1 + \tau^{0.5}
+$$
 
+#### Original equation
 
+$$
+\log_{10} C_{lake(P)} = 0.9217 + 0.6172 \frac{\log_{10} C_{in(P)}}{b}
+$$
 
+#### Simplified equation
 
+$$
+r_{lake(P)} = r_{in(P)}^{0.6172/b}
+$$
 
+### TP Canterbury
 
+When $\hspace{2mm} z_{max} \gt 7.5$:
 
+$$
+b = 1 + 0.91888 t^{0.0205}
+$$
 
+else:
 
+$$
+b = 1 + 0.09288 t^{0.0205}
+$$
+
+#### Original equation
+
+$$
+\log_{10} C_{lake(P)} = \frac{\log_{10} C_{in(P)}}{b}
+$$
+
+#### Simplified equation
+
+$$
+r_{lake(P)} = r_{in(P)}^{1/b}
+$$
+
+### TN Waikato
+
+$$
+b = 1 + \tau^{0.5}
+$$
+
+#### Original equation
+
+$$
+\log_{10} C_{lake(N)} = 2.3969 + 0.3564 \frac{\log_{10} C_{in(N)}}{b}
+$$
+
+#### Simplified equation
+
+$$
+r_{lake(N)} = r_{in(N)}^{0.3564/b}
+$$
 
 
 

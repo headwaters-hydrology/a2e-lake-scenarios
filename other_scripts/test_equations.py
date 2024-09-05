@@ -6,8 +6,6 @@ Created on Thu Sep  5 09:40:11 2024
 @author: mike
 """
 import numpy as np
-import math
-
 
 ##################################################
 ### Parameters
@@ -17,7 +15,7 @@ c_n_in_scenario = 800
 c_p_in_current = 100
 c_p_in_scenario = 40
 
-z_maxes = [7, 20]
+z_maxes = [1, 3, 4, 7, 20, 30, 100]
 t = 10
 u = 2
 fetch = 20
@@ -104,6 +102,73 @@ def est_d_lake_secchi_scenario(r_lake_chla, d_secchi_lake_current, z_max):
         return (np.log10(r_lake_chla**-0.74) + d_secchi_lake_current**0.5)**2
 
 
+### Regional equations
+
+def est_b_canterbury(t, z_max):
+    """
+
+    """
+    if z_max > 7.5:
+        b = 1 + 0.91888*(t**0.0205)
+    else:
+        b = 1 + 0.09288*(t**0.0205)
+
+    return b
+
+
+def est_log_c_lake_p_waikato(c_p_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return 0.9217 + 0.6172 * (np.log10(c_p_in)/b)
+
+
+def est_log_c_lake_n_waikato(c_n_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return 2.3969 + 0.3564 * (np.log10(c_n_in)/b)
+
+
+def est_log_c_lake_p_canterbury(c_p_in, t, z_max):
+    """
+
+    """
+    b = est_b_canterbury(t, z_max)
+
+    return np.log10(c_p_in)/b
+
+
+def est_r_lake_p_waikato(r_p_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return r_p_in**(0.6172/b)
+
+
+def est_r_lake_n_waikato(r_n_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return r_n_in**(0.3564/b)
+
+
+def est_r_lake_p_canterbury(r_p_in, t, z_max):
+    """
+
+    """
+    b = est_b_canterbury(t, z_max)
+
+    return r_p_in**(1/b)
+
 
 ##################################################
 ### Tests
@@ -188,12 +253,51 @@ def test_secchi_lake():
         assert d_secchi_scenario1 == d_secchi_scenario2
 
 
+### Regional models
+
+def test_tp_lake_waikato():
+    """
+
+    """
+    for z_max in z_maxes:
+        c_p_lake_current = 10**est_log_c_lake_p_waikato(c_p_in_current, t)
+        c_p_lake_scenario = 10**est_log_c_lake_p_waikato(c_p_in_scenario, t)
+
+        r_p_lake1 = round(c_p_lake_scenario/c_p_lake_current, 3)
+
+        r_p_lake2 = round(est_r_lake_p_waikato(r_p_in, t), 3)
+
+        assert r_p_lake1 == r_p_lake2
 
 
+def test_tn_lake_waikato():
+    """
+
+    """
+    for z_max in z_maxes:
+        c_n_lake_current = 10**est_log_c_lake_n_waikato(c_n_in_current, t)
+        c_n_lake_scenario = 10**est_log_c_lake_n_waikato(c_n_in_scenario, t)
+
+        r_n_lake1 = round(c_n_lake_scenario/c_n_lake_current, 3)
+
+        r_n_lake2 = round(est_r_lake_n_waikato(r_n_in, t), 3)
+
+        assert r_n_lake1 == r_n_lake2
 
 
+def test_tp_lake_canterbury():
+    """
 
+    """
+    for z_max in z_maxes:
+        c_p_lake_current = 10**est_log_c_lake_p_canterbury(c_p_in_current, t, z_max)
+        c_p_lake_scenario = 10**est_log_c_lake_p_canterbury(c_p_in_scenario, t, z_max)
 
+        r_p_lake1 = round(c_p_lake_scenario/c_p_lake_current, 3)
+
+        r_p_lake2 = round(est_r_lake_p_canterbury(r_p_in, t, z_max), 3)
+
+        assert r_p_lake1 == r_p_lake2
 
 
 
