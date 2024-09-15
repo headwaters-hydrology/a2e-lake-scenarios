@@ -24,6 +24,7 @@ rec_rivers_feather = data_path.joinpath('rec25_rivers_clean.feather')
 lakes_poly_path = data_path.joinpath('lake_polygons_fenz.gpkg')
 lakes_catch_path = data_path.joinpath('FENZ_v1_LakeCatchments.shp')
 
+rc_poly_path = data_path.joinpath('regional-council-2023-generalised.gpkg')
 
 ### Loads/concs
 indicators = ['CHLA', 'NH4N', 'Secchi', 'TN', 'TP', 'ECOLI']
@@ -99,12 +100,14 @@ lt_outflows_gpkg = limnotrack_path.joinpath('lake_outflows_limnotrack.gpkg')
 
 ## Lakes polygons and points
 lakes_poly_gbuf_path = data_path.joinpath('lake_poly_gbuf.blt')
-lakes_points_gbuf_path = data_path.joinpath('lake_points_gbuf.blt')
+lakes_points_gbuf_path = data_path.joinpath('lake_points.pbf')
 
 lakes_poly_gpkg_path = data_path.joinpath('lake_poly.gpkg')
 lakes_points_gpkg_path = data_path.joinpath('lake_points.gpkg')
 
-## Reference concs
+## Reference conc
+lake_ref_conc_csv = data_path.joinpath('LakeReferenceIndicators.csv')
+lake_missing_ref_csv = data_path.joinpath('lake_ref_missing.csv')
 rivers_ref_conc3_csv_path = data_path.joinpath('reference_conc_rec_level_3.csv')
 rivers_ref_conc2_csv_path = data_path.joinpath('reference_conc_rec_level_2.csv')
 rivers_ref_conc_csv_path = data_path.joinpath('reference_conc_rec_clean.csv.zip')

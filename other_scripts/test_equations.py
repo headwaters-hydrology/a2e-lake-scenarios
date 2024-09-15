@@ -58,14 +58,14 @@ def est_log_c_lake_chla(log_c_lake_p, log_c_lake_n):
     return -1.8 + 0.7*log_c_lake_n + 0.55*log_c_lake_p
 
 
-def est_d_lake_secchi(log_c_lake_chla, z_max, u, fetch):
+def est_d_lake_secchi(log_c_chla_lake, z_max, u, fetch):
     """
 
     """
     if z_max >= 20:
-        return (3.46 - 1.53*log_c_lake_chla)**2
+        return (3.46 - 1.53*log_c_chla_lake)**2
     else:
-        return (3.46 - 0.74*log_c_lake_chla - 0.35*np.log10((fetch*(u**2))/z_max))**2
+        return (3.46 - 0.74*log_c_chla_lake - 0.35*np.log10((fetch*(u**2))/z_max))**2
 
 
 def est_r_lake_p(r_p_in, t, z_max):
@@ -85,21 +85,21 @@ def est_r_lake_n(r_n_in):
     return r_n_in**0.54
 
 
-def est_r_lake_chla(r_p_in, r_n_in):
+def est_r_lake_chla(r_p_lake, r_n_lake):
     """
 
     """
-    return (r_p_in**0.55) * (r_n_in**0.7)
+    return (r_p_lake**0.55) * (r_n_lake**0.7)
 
 
-def est_d_lake_secchi_scenario(r_lake_chla, d_secchi_lake_current, z_max):
+def est_d_lake_secchi_scenario(r_chla_lake, d_secchi_lake_current, z_max):
     """
 
     """
     if z_max >= 20:
-        return (np.log10(r_lake_chla**-1.53) + d_secchi_lake_current**0.5)**2
+        return (np.log10(r_chla_lake**-1.53) + d_secchi_lake_current**0.5)**2
     else:
-        return (np.log10(r_lake_chla**-0.74) + d_secchi_lake_current**0.5)**2
+        return (np.log10(r_chla_lake**-0.74) + d_secchi_lake_current**0.5)**2
 
 
 ### Regional equations

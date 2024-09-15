@@ -188,7 +188,7 @@ def process_reference_conc_rec():
                         q_tot += q
 
                         ref0 = ref_conc0.loc[seg]
-    
+
                         for ind, val in ref0.groupby('indicator'):
                             val0 = val.loc[ind]
                             mean1 = val0['log_mean']
@@ -211,6 +211,24 @@ def process_reference_conc_rec():
                         res[ind] = {5: round(data[5]/q_tot, 4), 95: round(data[95]/q_tot, 4), 50: round(data[50]/q_tot, 4)}
                     f[LFENZID] = res
 
+    ### Lake reference values
+    ref_conc0 = pd.read_csv(params.lake_ref_conc_csv).dropna()
+
+    # Missing lakes
+    lakes_poly1 = gpd.read_file(params.lakes_poly_gpkg_path)
+    ref_conc1 = ref_conc0[ref_conc0.LFENZID.isin(lakes_poly1.LFENZID)].copy()
+    lakes_poly_missing = lakes_poly1[~lakes_poly1.LFENZID.isin(ref_conc1.LFENZID)].copy()
+    lakes_poly_missing['area_ha'] = (lakes_poly_missing.area/10000).round(1)
+    lakes_poly_missing.drop('geometry', axis=1).to_csv(params.lake_missing_ref_csv, index=False)
+
+    ## process data
+    ref_conc1 = ref_conc0.drop('Region', axis=1).set_index('LFENZID')
+    ref_conc1.columns = [c.split('reference_')[1] for c in ref_conc1.columns]
+    ref_conc1 = ref_conc1.round(3).rename(columns={'SECCHI': 'Secchi'})
+
+    with booklet.open(params.lake_reference_conc_path, 'n', value_serializer='orjson', key_serializer='uint4', n_buckets=10007) as f:
+        for lake_id, val in ref_conc1.to_dict('index').items():
+            f[lake_id] = val
 
 
 

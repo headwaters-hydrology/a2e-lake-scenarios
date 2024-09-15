@@ -28,6 +28,196 @@ import utils.parameters as param
 
 
 
+###############################################
+### Lake equations
+
+
+def est_b(t):
+    """
+
+    """
+    return 1 + 0.44*(t**0.13)
+
+
+# def est_log_c_lake_p(c_p_in, t, z_max):
+#     """
+
+#     """
+#     if z_max > 7.5:
+#         return np.log10(c_p_in)/est_b(t)
+#     else:
+#         return np.log10(c_p_in)
+
+
+# def est_log_c_lake_n(c_n_in, z_max):
+#     """
+
+#     """
+#     return 1.6 + 0.54*np.log10(c_n_in) - 0.41*np.log10(z_max)
+
+
+# def est_log_c_lake_chla(log_c_lake_p, log_c_lake_n):
+#     """
+
+#     """
+#     return -1.8 + 0.7*log_c_lake_n + 0.55*log_c_lake_p
+
+
+# def est_d_lake_secchi(log_c_lake_chla, z_max, u, fetch):
+#     """
+
+#     """
+#     if z_max >= 20:
+#         return (3.46 - 1.53*log_c_lake_chla)**2
+#     else:
+#         return (3.46 - 0.74*log_c_lake_chla - 0.35*np.log10((fetch*(u**2))/z_max))**2
+
+
+def est_r_lake_p(r_p_in, t, z_max):
+    """
+
+    """
+    if z_max > 7.5:
+        return r_p_in**(1/est_b(t))
+    else:
+        return r_p_in
+
+
+def est_r_lake_n(r_n_in):
+    """
+
+    """
+    return r_n_in**0.54
+
+
+def est_r_lake_chla(r_p_lake, r_n_lake):
+    """
+
+    """
+    return (r_p_lake**0.55) * (r_n_lake**0.7)
+
+
+def est_d_lake_secchi_scenario(r_chla_lake, d_secchi_lake_current, z_max):
+    """
+
+    """
+    if z_max >= 20:
+        return (np.log10(r_chla_lake**-1.53) + (d_secchi_lake_current**0.5))**2
+    else:
+        return (np.log10(r_chla_lake**-0.74) + (d_secchi_lake_current**0.5))**2
+
+
+### Regional equations
+
+def est_b_canterbury(t, z_max):
+    """
+
+    """
+    if z_max > 7.5:
+        b = 1 + 0.91888*(t**0.0205)
+    else:
+        b = 1 + 0.09288*(t**0.0205)
+
+    return b
+
+
+# def est_log_c_lake_p_waikato(c_p_in, t):
+#     """
+
+#     """
+#     b = 1 + t**0.5
+
+#     return 0.9217 + 0.6172 * (np.log10(c_p_in)/b)
+
+
+# def est_log_c_lake_n_waikato(c_n_in, t):
+#     """
+
+#     """
+#     b = 1 + t**0.5
+
+#     return 2.3969 + 0.3564 * (np.log10(c_n_in)/b)
+
+
+# def est_log_c_lake_p_canterbury(c_p_in, t, z_max):
+#     """
+
+#     """
+#     b = est_b_canterbury(t, z_max)
+
+#     return np.log10(c_p_in)/b
+
+
+def est_r_lake_p_waikato(r_p_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return r_p_in**(0.6172/b)
+
+
+def est_r_lake_n_waikato(r_n_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return r_n_in**(0.3564/b)
+
+
+def est_r_lake_p_canterbury(r_p_in, t, z_max):
+    """
+
+    """
+    b = est_b_canterbury(t, z_max)
+
+    return r_p_in**(1/b)
+
+
+def est_ind_scenario_conc(current_concs, conc_factors, region, t, z_max):
+    """
+
+    """
+    ## Nitrogen
+    r_n_in = conc_factors['nitrogen']
+    c_n_lake_current = current_concs['TN']
+    if region == 'Waikato':
+        r_n_lake = est_r_lake_n_waikato(r_n_in, t)
+    else:
+        r_n_lake = est_r_lake_n(r_n_in)
+
+    c_n_lake_scenario = c_n_lake_current * r_n_lake
+
+    ## TP
+    r_p_in = conc_factors['phosphorus']
+    c_p_lake_current = current_concs['TP']
+    if region == 'Waikato':
+        r_p_lake = est_r_lake_p_waikato(r_p_in, t)
+    elif region == 'Canterbury':
+        r_p_lake = est_r_lake_p_canterbury(r_p_in, t, z_max)
+    else:
+        r_p_lake = est_r_lake_p(r_p_in, t, z_max)
+
+    c_p_lake_scenario = c_p_lake_current * r_p_lake
+
+    ## Chla
+    c_chla_lake_current = current_concs['CHLA']
+
+    r_chla_lake = est_r_lake_chla(r_p_lake, r_n_lake)
+
+    c_chla_lake_scenario = c_chla_lake_current * r_chla_lake
+
+    ## Secchi
+    d_secchi_lake_current = current_concs['Secchi']
+
+    d_secchi_lake_scenario = est_d_lake_secchi_scenario(r_chla_lake, d_secchi_lake_current, z_max)
+
+    ## Package up the results
+    res = {'TN': c_n_lake_scenario, 'TP': c_p_lake_scenario, 'CHLA': c_chla_lake_scenario, 'Secchi': d_secchi_lake_scenario}
+
+    return res
+
 
 ###############################################
 ### Helper Functions
@@ -74,157 +264,79 @@ def decode_obj(str_obj):
     return d1
 
 
-def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, trig):
+def calc_scenario_tbl(lake_id, lc_tbl, calc_ready, trig):
     """
 
     """
-    conc_factor = 1
+    conc_factors = None
 
-    if indicator != 'ECOLI':
-        data = get_value(param.sites_lc_red_yields_path, nzsegment).reindex(param.lu_order)
+    data = get_value(param.lakes_lc_red_yields_path, lake_id).reindex(param.lu_order)
 
-        if indicator in ('DRP', 'TP'):
-            name = 'phosphorus_'
-        elif indicator in ('NO3N', 'TN'):
-            name = 'nitrogen_'
+    cols = ['phosphorus', 'nitrogen']
+    # if indicator in ('TP', 'CHLA', 'SECCHI'):
+    #     cols.append('phosphorus')
+    # elif indicator in ('TN', 'CHLA', 'SECCHI'):
+    #     cols.append('nitrogen')
 
-        # cols = ['land_cover', 'area_ha']
-        # up_cols = ['land_cover', 'area_ha']
-        cols = ['area_ha']
-        up_cols = ['area_ha']
-        for col in data.columns:
-            if name in col:
-                cols.append(col)
-                up_cols.append(col[len(name):])
+    # cols = ['land_cover', 'area_ha']
+    # up_cols = ['land_cover', 'area_ha']
+    # cols = ['area_ha']
+    # up_cols = ['area_ha']
+    # for col in data.columns:
+    #     if name in col:
+    #         cols.append(col)
+    #         up_cols.append(col[len(name):])
 
-        data0 = data[cols].copy()
-        data0.columns = up_cols
-        # data0 = data0.set_index('land_cover')
+    # data0 = data[cols].copy()
+    # data0.columns = up_cols
+    # data0 = data0.set_index('land_cover')
 
-        if (trig == 'tbl_calc_btn') and (calc_ready == 1):
-            data = pd.DataFrame(lc_tbl).set_index('land_cover').astype('int16')
-            data2 = pd.concat([data0, data], axis=1)
-            # print(data2)
-            new_contrib = (data2['yield']*data2['new_land_area'])*(1 - data2['mitigation']*0.01)
-            data2['new_load'] = ((new_contrib/new_contrib.sum()) * 100).astype('int8')
-            old_contrib = data2['yield']*data2['land_area']
-            conc_factor = new_contrib.sum()/old_contrib.sum()
+    if (trig == 'tbl_calc_btn') and (calc_ready == 1):
+        data0 = pd.DataFrame(lc_tbl).set_index('land_cover').astype('int16')
+        mitigation0 = data0[cols]
+        # data2 = pd.concat([data0, data], axis=1)
+        # print(data2)
+        new_contrib = (data['yield'][cols].multiply(data0['new_land_area'], axis=0)*(1 - mitigation0*0.01))
+        # data0['new_load'] = ((new_contrib.sum(axis=1)/new_contrib.sum(axis=1).sum()) * 100).astype('int8')
+        old_contrib = data['yield'][cols].multiply(data0['land_area'], axis=0)
+        conc_factors = (new_contrib.sum()/old_contrib.sum()).to_dict()
 
-            old_tbl_data = deepcopy(lc_tbl)
-            lc_tbl = []
-            for ld in old_tbl_data:
-                lc = ld['land_cover']
-                ld['new_load'] = data2.loc[lc, 'new_load']
-                lc_tbl.append(ld)
-
-        else:
-            tot_area = data0['area_ha'].sum()
-            area_perc = ((data0['area_ha']/tot_area) * 100).round().astype('int8')
-            sum1 = area_perc.sum()
-            if sum1 != 100:
-                diff = 100 - sum1
-                area_perc.loc[area_perc.idxmax()] = area_perc.loc[area_perc.idxmax()] + diff
-
-            mass_ish = (data0['yield']*area_perc)
-            tot_mass = mass_ish.sum()
-            mass_perc = ((mass_ish/tot_mass) * 100).round().astype('int8')
-            sum1 = mass_perc.sum()
-            if sum1 != 100:
-                diff = 100 - sum1
-                mass_perc.loc[mass_perc.idxmax()] = mass_perc.loc[mass_perc.idxmax()] + diff
-            reductions = data0['reduction'].round()
-
-            lc_tbl = []
-            for i, lc in enumerate(data0.index):
-                dict1 = {'land_cover': lc, 'land_area': area_perc[i], 'load': mass_perc[i], 'mitigation': reductions[i], 'new_land_area': area_perc[i]}
-
-                lc_tbl.append(dict1)
+        # old_tbl_data = deepcopy(lc_tbl)
+        # lc_tbl = []
+        # for ld in old_tbl_data:
+        #     lc = ld['land_cover']
+        #     ld['new_load'] = data0.loc[lc, 'new_load']
+        #     lc_tbl.append(ld)
 
     else:
-        data = get_value(param.ecoli_catch_yields_path, nzsegment)
+        area_ha = data['area_ha']['area_ha']
+        tot_area = area_ha.sum()
+        area_perc = ((area_ha/tot_area) * 100).round().astype('int8')
+        sum1 = area_perc.sum()
+        if sum1 != 100:
+            diff = 100 - sum1
+            area_perc.loc[area_perc.idxmax()] = area_perc.loc[area_perc.idxmax()] + diff
 
-        if (trig == 'tbl_calc_btn') and (calc_ready == 1):
-            # print(lc_tbl)
-            data0 = pd.DataFrame(lc_tbl).set_index('land_cover').astype('int8') * 0.01
-            data0.index.name = 'land_use'
-            mitigation = data0[['mitigation']]
-            # print(data0)
-            # data0.loc['Dairy', 'new_land_area'] = data0.loc['Dairy', 'new_land_area'] - 0.1
-            # data0.loc['Sheep and Beef', 'new_land_area'] = data0.loc['Sheep and Beef', 'new_land_area'] - 0.2
-            # data0.loc['Exotic Forest', 'new_land_area'] = data0.loc['Exotic Forest', 'new_land_area'] + 0.25
-            # data0.loc['Native Vegetation', 'new_land_area'] = data0.loc['Native Vegetation', 'new_land_area'] + 0.05
-            lc_ratio_change = (data0['new_land_area'] - data0['land_area']).round(2)
-            lc_ratio_change.name = 'area_change_ratio'
-            areas_lost1 = lc_ratio_change[lc_ratio_change < 0] * -1
-            if not areas_lost1.empty:
-                areas_lost2 = data[data.land_use.isin(areas_lost1.index)]
-                areas_lost3 = pd.merge(areas_lost2, areas_lost1, on='land_use')
-                areas_lost3['area_change'] = areas_lost3['area_change_ratio'] * areas_lost3['area_ha']
-                areas_lost0 = areas_lost3.groupby(['elev', 'drain'])['area_change'].sum().reset_index()
-                areas_lost3['area_ha'] = areas_lost3['area_ha'] - areas_lost3['area_change']
+        ## Load contributions
+        mass_ish = data['yield'][cols].multiply(area_perc, axis=0)
+        tot_mass = mass_ish.sum()
+        mass_perc = ((mass_ish/tot_mass) * 100).round().astype('int8')
+        sum1 = mass_perc.sum()
+        if (sum1 != 100).any():
+            diff = 100 - sum1
+            mass_perc.loc[mass_perc.idxmax()] = mass_perc.loc[mass_perc.idxmax()] + diff
 
-                tot_change = areas_lost1.sum()
+        ## Reductions
+        reductions = data['reduction'].round().astype('int8')
 
-                areas_gained1 = lc_ratio_change[lc_ratio_change > 0]
-                areas_gained2 = data[data.land_use.isin(areas_gained1.index)]
-                areas_gained3 = pd.merge(areas_gained2, areas_gained1, on='land_use')
-                areas_gained4 = pd.merge(areas_gained3, areas_lost0, on=['elev', 'drain'])
-                areas_gained4['area_change'] = ((areas_gained4['area_change_ratio']/tot_change) * areas_gained4['area_change'])
-                areas_gained4['area_ha'] = areas_gained4['area_ha'] + areas_gained4['area_change']
+        lc_tbl = []
+        for i, lc in enumerate(data.index):
+            red1 = reductions.iloc[i]
+            dict1 = {'land_cover': lc, 'land_area': area_perc[i], 'load_n': mass_perc['nitrogen'][i], 'load_p': mass_perc['phosphorus'][i], 'nitrogen': red1['nitrogen'], 'phosphorus': red1['phosphorus'], 'new_land_area': area_perc[i]}
 
-                areas_unchanged1 = lc_ratio_change[lc_ratio_change == 0]
-                areas_unchanged2 = data[data.land_use.isin(areas_unchanged1.index)]
+            lc_tbl.append(dict1)
 
-                combo1 = pd.concat([areas_unchanged2, areas_lost3.drop(['area_change_ratio', 'area_change'], axis=1), areas_gained4.drop(['area_change_ratio', 'area_change'], axis=1)])
-
-                combo1 = pd.merge(combo1, mitigation, on='land_use')
-                combo1['area_ratio'] = combo1['area_ha']/combo1['area_ha'].sum()
-                combo1['ecoli_load'] = combo1['area_ratio'] * combo1['ecoli_factor'] * (1 - combo1['mitigation'])
-
-                combo2 = calc_ecoli_load(combo1)
-
-                old_tbl_data = deepcopy(lc_tbl)
-                lc_tbl = []
-                for ld in old_tbl_data:
-                    lc = ld['land_cover']
-                    ld['new_load'] = combo2.loc[lc, 'ecoli_load_perc']
-                    lc_tbl.append(ld)
-
-            else:
-                combo1 = pd.merge(data, mitigation, on='land_use')
-                combo1['area_ratio'] = combo1['area_ha']/combo1['area_ha'].sum()
-                combo1['ecoli_load'] = combo1['area_ratio'] * combo1['ecoli_factor'] * (1 - combo1['mitigation'])
-                combo1['ecoli_load_perc'] = ((combo1['ecoli_load']/combo1['ecoli_load'].sum()) * 100).astype('int8')
-
-                combo2 = combo1.groupby('land_use')[['ecoli_load_perc']].sum()
-                combo2.index.name = 'land_cover'
-
-                old_tbl_data = deepcopy(lc_tbl)
-                lc_tbl = []
-                for ld in old_tbl_data:
-                    lc = ld['land_cover']
-                    ld['new_load'] = combo2.loc[lc, 'ecoli_load_perc']
-                    lc_tbl.append(ld)
-
-            ## Calc conc factor for indicator
-            data['area_ratio'] = data['area_ha']/data['area_ha'].sum()
-            data['ecoli_load'] = data['area_ratio'] * data['ecoli_factor']
-            old_ecoli_load = data['ecoli_load'].sum()
-            new_ecoli_load = combo1['ecoli_load'].sum()
-            conc_factor = new_ecoli_load/old_ecoli_load
-
-        else:
-            data['area_ratio'] = data['area_ha']/data['area_ha'].sum()
-            data['ecoli_load'] = data['area_ratio'] * data['ecoli_factor']
-            combo2 = calc_ecoli_load(data)
-
-            lc_tbl = []
-            for lc, row in combo2.iterrows():
-                dict1 = {'land_cover': lc, 'land_area': row['area_ratio'], 'load': row['ecoli_load_perc'], 'mitigation': int(param.ecoli_reductions[lc] * 100), 'new_land_area': row['area_ratio']}
-
-                lc_tbl.append(dict1)
-
-    return lc_tbl, conc_factor
+    return lc_tbl, conc_factors
 
 
 
@@ -232,70 +344,39 @@ def calc_scenario_results(site_id, indicator, nzsegment, lc_tbl, calc_ready, tri
 ### Table creation
 
 
-def make_results_table(data=[], tab='ind', indicator='ECOLI'):
+def make_results_table(data=[], tab='TN'):
     """
 
     """
-    if tab == 'ind':
-        if indicator == 'ECOLI':
-            cols_dict = param.ind_tbl_cols_ecoli_dict
-        else:
-            cols_dict = param.ind_tbl_cols_main_dict
-
-        tbl = dash_table.DataTable(
-            data=data,
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'font-family':'sans-serif',
-                'font-size': 12
-                },
-            columns=[{'name': name, 'id': key} for key, name in cols_dict.items()],
-            # id='stats_tbl',
-            style_header_conditional=[{
-                'if': {'column_id': 'conc'},
-                'font-weight': 'bold'
-            },
-                {
-                'if': {
-                    # 'filter_query': "{name} = Target conc",
-                    'column_id': 'name'},
-                'font-weight': 'bold'
-            },
-
-            ],
-            )
+    if tab == 'Secchi':
+        cols_dict = param.ind_tbl_cols_secchi_dict
     else:
-        tbl = dash_table.DataTable(
-            data=data,
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'font-family':'sans-serif',
-                'font-size': 12
-                },
-            columns=[{'name': name, 'id': key} for key, name in param.peri_tbl_cols_dict.items()],
-            merge_duplicate_headers=True,
-            # id='stats_tbl',
-            style_header_conditional=[
-                {
-                'if': {'column_id': 'conc_shaded'},
-                'font-weight': 'bold'
-                },
-                {
-                'if': {'column_id': 'conc_unshaded'},
-                'font-weight': 'bold'
-                },
-                {
-                'if': {
-                    # 'filter_query': "{name} = Target conc",
-                    'column_id': 'name'},
-                'font-weight': 'bold'
+        cols_dict = param.ind_tbl_cols_main_dict
+
+    tbl = dash_table.DataTable(
+        data=data,
+        style_table={'overflowX': 'auto'},
+        style_cell={
+            'whiteSpace': 'normal',
+            'height': 'auto',
+            'font-family':'sans-serif',
+            'font-size': 12
             },
-            ],
-            )
+        columns=[{'name': name, 'id': key} for key, name in cols_dict.items()],
+        # id='stats_tbl',
+        style_header_conditional=[{
+            'if': {'column_id': 'conc'},
+            'font-weight': 'bold'
+        },
+            {
+            'if': {
+                # 'filter_query': "{name} = Target conc",
+                'column_id': 'name'},
+            'font-weight': 'bold'
+        },
+
+        ],
+        )
 
     return tbl
 
@@ -304,51 +385,75 @@ def make_results_table(data=[], tab='ind', indicator='ECOLI'):
 ### Figure creation
 
 
-def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
+def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
     """
     I need to make a figure this way because of a bug in the reset axes of the figure.
     """
-    stats = pd.DataFrame(stats_tbl).set_index('name')['conc']
-    names = stats.index
+    stats0 = pd.DataFrame(data_tbl).set_index('name')['conc']
+    names = stats0.index
 
-    # print(stats)
-    data = get_value(param.rivers_data_app_path, (site_id, indicator))
-    ymax = data.max()
-    if indicator == 'ECOLI':
-        y_max_plot = np.percentile(data.values, 75)
-    else:
-        y_max_plot = np.percentile(data.values, 95)
-    # data_len = len(data)
-    start_date = data.index[0]
-    end_date = data.index[-1]
-    diff_days = (end_date - start_date).days
-    extra_x_days = int(diff_days*0.04)
-    start_x = start_date - pd.DateOffset(days=extra_x_days)
-    end_x = end_date + pd.DateOffset(days=extra_x_days)
+    ## Fig
+    fig = go.Figure()
+
+    try:
+        # print(stats0)
+        data = get_value(param.lakes_moni_data_path, lake_id).loc[indicator]
+
+        ymax = data.max()
+        if indicator == 'Secchi':
+            y_max_plot = ymax
+        else:
+            y_max_plot = np.percentile(data.values, 95)
+        # data_len = len(data)
+        start_date = data.index[0]
+        end_date = data.index[-1]
+        diff_days = (end_date - start_date).days
+        extra_x_days = int(diff_days*0.04)
+        start_x = start_date - pd.DateOffset(days=extra_x_days)
+        end_x = end_date + pd.DateOffset(days=extra_x_days)
+
+        ## Add traces
+        # Samples
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data.values,
+                mode='markers',
+                marker={
+                    'color': 'rgb(179, 179, 179)',
+                    },
+                hoverinfo='name+y',
+                name='Observation',
+                # legendrank=1,
+                )
+            )
+
+        y_median_current = float(stats0['Current (measured)'])
+        if stats0['Scenario (measured)'] == 'Press the Run catchment scenario button':
+            y_median_scenario = None
+        else:
+            y_median_scenario = float(stats0['Scenario (measured)'])
+
+    except:
+        y_median_current = float(stats0['Current (modelled)'])
+        if stats0['Scenario (modelled)'] == 'Press the Run catchment scenario button':
+            y_median_scenario = None
+        else:
+            y_median_scenario = float(stats0['Scenario (modelled)'])
+
+        # if 'Band D' in stats0:
+        #     ymax = int(stats0['Band D'].split('> ')[1])
+        # else:
+        ymax = y_median_current * 3
+
+        y_max_plot = ymax
+        start_x = 0
+        end_x = 1
 
     # print(stats)
 
     # data_list = list(stats.values())
     # data_list.extend([stats['median']]*10)
-
-    ## Fig
-    fig = go.Figure()
-
-    ## Add traces
-    # Samples
-    fig.add_trace(
-        go.Scatter(
-            x=data.index,
-            y=data.values,
-            mode='markers',
-            marker={
-                'color': 'rgb(179, 179, 179)',
-                },
-            hoverinfo='name+y',
-            name='Observation',
-            # legendrank=1,
-            )
-        )
 
     # Bands
     if 'Band A' in names:
@@ -368,7 +473,7 @@ def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
                             )
                         )
                 else:
-                    ymax1 = float(stats[name].split('- ')[1])
+                    ymax1 = float(stats0[name].split('- ')[1])
                     ymax_plot = ymax1 - y_previous
                     y_previous = ymax1
                     # print(ymax_plot)
@@ -385,37 +490,37 @@ def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
                         )
 
     # Reference
-    mean1, lower1, upper1 = sep_reference_values(stats['Reference'])
+    ref_median = float(stats0['Reference'])
 
     fig.add_trace(
         go.Scatter(
-            x=[start_x, end_x, end_x, start_x],
-            y=[upper1, upper1, lower1, lower1],
+            x=[start_x, end_x],
+            y=[ref_median] * 2,
             mode='lines',
             line=dict(
                 dash='dash',
-                width=0,
+                width=8,
                 color='rgb(170, 170, 170)'
                 ),
             hoverinfo='name+y',
             name='Reference',
             showlegend=True,
-            fill='toself',
-            fillpattern=dict(
-                size=10,
-                solidity=0.2,
-                shape='/',
-                bgcolor='rgba(0, 0, 0, 0)',
-                )
+            # fill='toself',
+            # fillpattern=dict(
+            #     size=10,
+            #     solidity=0.2,
+            #     shape='/',
+            #     bgcolor='rgba(0, 0, 0, 0)',
+            #     )
             )
         )
 
     # Current
-    median1 = float(stats['Current'])
+    # median1 = float(stats0['Current'])
     fig.add_trace(
         go.Scatter(
             x=[start_x, end_x],
-            y=[median1] * 2,
+            y=[y_median_current] * 2,
             mode='lines',
             line=dict(
                 dash='dash',
@@ -428,12 +533,12 @@ def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
         )
 
     # Scenario
-    median1 = stats['Scenario']
-    if median1 != 'Press the Run catchment scenario button':
+    # median1 = stats0['Scenario']
+    if y_median_scenario:
         fig.add_trace(
             go.Scatter(
                 x=[start_x, end_x],
-                y=[float(median1)] * 2,
+                y=[y_median_scenario] * 2,
                 mode='lines',
                 line=dict(
                     dash='dashdot',
@@ -446,10 +551,19 @@ def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
             )
 
     ## Update layout
-    if indicator == 'ECOLI':
-        units = 'CFU/100ml'
+    if indicator == 'Secchi':
+        y_range = [0, ref_median * 1.1]
+
+        if y_median_scenario:
+            if y_median_scenario > ref_median:
+                y_range = [0, y_median_scenario * 1.1]
+        units = 'm'
     else:
-        units = 'mg/l'
+        units = 'mg/m³'
+        y_range = [0, y_max_plot]
+
+    # print(y_range)
+
     fig.update_layout(
         yaxis_title=units,
         margin=dict(l=20, r=20, t=0, b=60),
@@ -460,7 +574,7 @@ def make_fig_ind(stats_tbl=None, site_id=None, indicator=None):
             y=0.9,
             )
         )
-    fig.update_yaxes(range=[0, y_max_plot])
+    fig.update_yaxes(range=y_range)
     fig.update_xaxes(range=[start_x, end_x])
 
     return fig

@@ -63,11 +63,12 @@ def make_tooltip(x):
     return tt
 
 
-lcdb0 = gpd.read_feather(params.lcdb_red_path).drop(['nitrogen_yield',  'phosphorus_yield'], axis=1)
-snb_dairy0 = gpd.read_feather(params.snb_dairy_red_path).drop(['nitrogen_yield',  'phosphorus_yield'], axis=1)
+lcdb = gpd.read_feather(params.lcdb_red_path).drop(['nitrogen_yield',  'phosphorus_yield'], axis=1)
+snb_dairy = gpd.read_feather(params.snb_dairy_red_path).drop(['nitrogen_yield',  'phosphorus_yield'], axis=1)
+snb_dairy = snb_dairy.explode(index_parts=False).reset_index(drop=True)
 
-lcdb_awm = utils.area_weighted_mean(lcdb0.replace({'land_cover': params.combine_land_covers}), 'land_cover', ['nitrogen_reduction',  'phosphorus_reduction'])
-snb_dairy_awm = utils.area_weighted_mean(snb_dairy0, 'land_cover', ['nitrogen_reduction',  'phosphorus_reduction'])
+lcdb_awm = utils.area_weighted_mean(lcdb.replace({'land_cover': params.combine_land_covers}), 'land_cover', ['nitrogen_reduction',  'phosphorus_reduction'])
+snb_dairy_awm = utils.area_weighted_mean(snb_dairy, 'land_cover', ['nitrogen_reduction',  'phosphorus_reduction'])
 
 awm = pd.concat([snb_dairy_awm, lcdb_awm])
 awm = awm.loc[~awm.index.duplicated()]
@@ -77,13 +78,16 @@ awm.reset_index().to_feather(params.awm_red_path)
 
 
 if __name__ == '__main__':
-    with concurrent.futures.ProcessPoolExecutor(max_workers=3, mp_context=mp.get_context("spawn")) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=10, mp_context=mp.get_context("spawn")) as executor:
         futures = {}
         with booklet.open(params.lakes_catch_major_path) as catches:
             for lake_id, catch in catches.items():
                 poly = gpd.GeoSeries([catch], crs=4326).to_crs(2193).iloc[0]
 
-                f1 = executor.submit(utils.calc_reductions, lake_id, poly, lcdb0, snb_dairy0)
+                lcdb1 = lcdb.loc[lcdb.sindex.query(poly, predicate="intersects")].copy()
+                snb_dairy1 = snb_dairy.loc[snb_dairy.sindex.query(poly, predicate="intersects")].copy()
+
+                f1 = executor.submit(utils.calc_reductions, lake_id, poly, lcdb1, snb_dairy1)
                 futures[f1] = lake_id
 
         # Save results

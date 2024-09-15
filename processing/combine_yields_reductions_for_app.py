@@ -56,7 +56,12 @@ def combine_red_yields():
                 # Remove geometry for now, but I might need it later...
                 combo4 = pd.DataFrame(combo3.drop('geometry', axis=1))
                 combo5 = pd.concat([combo4, awm])
-                combo5 = combo5.loc[~combo5.index.duplicated()]
+                combo5 = combo5.loc[~combo5.index.duplicated()].round(2)
+
+                # Reformat column names
+                cols = tuple(col.split('_')[0] if col != 'area_ha' else col for col in combo5.columns)
+                t1 = zip(('area_ha', 'yield', 'yield', 'reduction', 'reduction'), cols)
+                combo5.columns = pd.MultiIndex.from_tuples(t1)
 
                 combo_dict[lake_id] = combo5.reindex(params.lu_order)
 

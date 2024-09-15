@@ -80,16 +80,22 @@ def lakes_points_poly_process():
     ## Point locations of lakes
     # All lakes
     sites = lakes_poly2.copy()
-    sites['geometry'] = sites.geometry.centroid.to_crs(4326)
+    sites['geometry'] = sites.geometry.centroid
 
-    sites_geo = sites.set_index('LFENZID').__geo_interface__
+    # Add in the regional council names
+    rc_poly = gpd.read_file(params.rc_poly_path)[['REGC2023_V1_00_NAME_ASCII', 'geometry']].rename(columns={'REGC2023_V1_00_NAME_ASCII': 'regional_council'})
+    rc_poly['regional_council'] = rc_poly['regional_council'].apply(lambda x: x.split(' Region')[0])
+
+    sites1 = sites.sjoin(rc_poly).drop('index_right', axis=1)
+
+    sites_geo = sites1.to_crs(4326).set_index('LFENZID').__geo_interface__
 
     sites_gbuf = geobuf.encode(sites_geo)
 
     with open(params.lakes_points_gbuf_path, 'wb') as f:
         f.write(sites_gbuf)
 
-    sites.to_file(params.lakes_points_gpkg_path, index=False)
+    sites1.to_file(params.lakes_points_gpkg_path, index=False)
 
     ## Point locations of monitoring sites
     # stdev0 = pd.read_csv(utils.lakes_stdev_moni_path)

@@ -368,26 +368,29 @@ def process_land_cover_per_catch(way_id, data):
     return minor_catch0
 
 
-def calc_farm_yields(poly, farm_geo, farm_yields, slope_geo, moisture_geo):
+def calc_farm_yields(poly, snb_dairy1, farm_yields, slope_geo0, moisture_geo0):
     """
 
     """
     # SnB and dairy
-    snb_dairy1 = farm_geo.loc[farm_geo.sindex.query(poly, predicate="intersects")].copy()
-    if not snb_dairy1.empty:
-        snb_dairy1b = intersection(snb_dairy1.geometry.tolist(), poly)
-        snb_dairy1['geometry'] = snb_dairy1b
-        snb_dairy1 = snb_dairy1[~snb_dairy1.geometry.is_empty].copy()
-        snb_dairy2 = snb_dairy1.sjoin(slope_geo, how='left', rsuffix='slope')
-        snb_dairy3 = snb_dairy2.sjoin(moisture_geo, how='left', rsuffix='moisture')
-        snb_dairy4 = snb_dairy3.merge(farm_yields, on=['land_cover', 'slope', 'moisture']).drop(['index_slope', 'index_moisture', 'slope', 'moisture'], axis=1)
-        snb_yields0 = area_weighted_mean(snb_dairy4, 'typology', ['phosphorus_yield', 'nitrogen_yield']).round(3)
-        snb_dairy5 = snb_dairy4.dissolve('typology').drop(['phosphorus_yield', 'nitrogen_yield'], axis=1)
-        snb_dairy1 = snb_dairy5.merge(snb_yields0, on='typology').reset_index()
-        # snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0.1).simplify(10).make_valid()
-        snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0).make_valid()
+    # snb_dairy1 = farm_geo.loc[farm_geo.sindex.query(poly, predicate="intersects")].copy()
+    # if not snb_dairy1.empty:
+    #     slope_geo0 = slope_geo.loc[slope_geo.sindex.query(poly, predicate="intersects")]
+    #     moisture_geo0 = moisture_geo.loc[moisture_geo.sindex.query(poly, predicate="intersects")]
 
-    return snb_dairy1
+    snb_dairy1b = intersection(snb_dairy1.geometry.tolist(), poly)
+    snb_dairy1['geometry'] = snb_dairy1b
+    snb_dairy1 = snb_dairy1[~snb_dairy1.geometry.is_empty].copy()
+    snb_dairy2 = snb_dairy1.sjoin(slope_geo0, how='left', rsuffix='slope')
+    snb_dairy3 = snb_dairy2.sjoin(moisture_geo0, how='left', rsuffix='moisture')
+    snb_dairy4 = snb_dairy3.merge(farm_yields, on=['land_cover', 'slope', 'moisture']).drop(['index_slope', 'index_moisture', 'slope', 'moisture'], axis=1)
+    snb_yields0 = area_weighted_mean(snb_dairy4, 'typology', ['phosphorus_yield', 'nitrogen_yield']).round(3)
+    snb_dairy5 = snb_dairy4.dissolve('typology').drop(['phosphorus_yield', 'nitrogen_yield'], axis=1)
+    snb_dairy6 = snb_dairy5.merge(snb_yields0, on='typology').reset_index()
+    # snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0.1).simplify(10).make_valid()
+    snb_dairy6['geometry'] = snb_dairy6['geometry'].buffer(0).make_valid()
+
+    return snb_dairy6
 
 
 def calc_lcdb_yields(poly, lcdb_geo):
@@ -459,84 +462,84 @@ def combine_yields(lake_id, poly):
     return combo5
 
 
-def calc_yields(catch_id, poly, farm_geo, farm_yields, slope_geo, moisture_geo, lcdb_geo):
-    """
+# def calc_yields(catch_id, poly, farm_geo, farm_yields, slope_geo, moisture_geo, lcdb_geo):
+#     """
 
-    """
-    # SnB and dairy
-    snb_dairy1 = farm_geo.loc[farm_geo.sindex.query(poly, predicate="intersects")].copy()
-    if not snb_dairy1.empty:
-        snb_dairy1b = intersection(snb_dairy1.geometry.tolist(), poly)
-        snb_dairy1['geometry'] = snb_dairy1b
-        snb_dairy1 = snb_dairy1[~snb_dairy1.geometry.is_empty].copy()
-        snb_dairy2 = snb_dairy1.sjoin(slope_geo, how='left', rsuffix='slope')
-        snb_dairy3 = snb_dairy2.sjoin(moisture_geo, how='left', rsuffix='moisture')
-        snb_dairy4 = snb_dairy3.merge(farm_yields, on=['land_cover', 'slope', 'moisture']).drop(['index_slope', 'index_moisture', 'slope', 'moisture'], axis=1)
-        snb_yields0 = area_weighted_mean(snb_dairy4, 'typology', ['phosphorus_yield', 'nitrogen_yield']).round(3)
-        snb_dairy5 = snb_dairy4.dissolve('typology').drop(['phosphorus_yield', 'nitrogen_yield'], axis=1)
-        snb_dairy1 = snb_dairy5.merge(snb_yields0, on='typology').reset_index()
-        # snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0.1).simplify(10).make_valid()
-        snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0).make_valid()
+#     """
+#     # SnB and dairy
+#     snb_dairy1 = farm_geo.loc[farm_geo.sindex.query(poly, predicate="intersects")].copy()
+#     if not snb_dairy1.empty:
+#         snb_dairy1b = intersection(snb_dairy1.geometry.tolist(), poly)
+#         snb_dairy1['geometry'] = snb_dairy1b
+#         snb_dairy1 = snb_dairy1[~snb_dairy1.geometry.is_empty].copy()
+#         snb_dairy2 = snb_dairy1.sjoin(slope_geo, how='left', rsuffix='slope')
+#         snb_dairy3 = snb_dairy2.sjoin(moisture_geo, how='left', rsuffix='moisture')
+#         snb_dairy4 = snb_dairy3.merge(farm_yields, on=['land_cover', 'slope', 'moisture']).drop(['index_slope', 'index_moisture', 'slope', 'moisture'], axis=1)
+#         snb_yields0 = area_weighted_mean(snb_dairy4, 'typology', ['phosphorus_yield', 'nitrogen_yield']).round(3)
+#         snb_dairy5 = snb_dairy4.dissolve('typology').drop(['phosphorus_yield', 'nitrogen_yield'], axis=1)
+#         snb_dairy1 = snb_dairy5.merge(snb_yields0, on='typology').reset_index()
+#         # snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0.1).simplify(10).make_valid()
+#         snb_dairy1['geometry'] = snb_dairy1['geometry'].buffer(0).make_valid()
 
-    # LCDB
-    lcdb3 = lcdb_geo.loc[lcdb_geo.sindex.query(poly, predicate="intersects")].copy()
-    if not lcdb3.empty:
-        lcdb3b = intersection(lcdb3.geometry.tolist(), poly)
-        lcdb3['geometry'] = lcdb3b
-        lcdb3 = lcdb3[~lcdb3.geometry.is_empty].copy()
-        lcdb3 = lcdb3.dissolve('typology').reset_index()
-        # lcdb3['geometry'] = lcdb3.buffer(0.1).simplify(10).make_valid()
-        lcdb3['geometry'] = lcdb3.buffer(0).make_valid()
+#     # LCDB
+#     lcdb3 = lcdb_geo.loc[lcdb_geo.sindex.query(poly, predicate="intersects")].copy()
+#     if not lcdb3.empty:
+#         lcdb3b = intersection(lcdb3.geometry.tolist(), poly)
+#         lcdb3['geometry'] = lcdb3b
+#         lcdb3 = lcdb3[~lcdb3.geometry.is_empty].copy()
+#         lcdb3 = lcdb3.dissolve('typology').reset_index()
+#         # lcdb3['geometry'] = lcdb3.buffer(0.1).simplify(10).make_valid()
+#         lcdb3['geometry'] = lcdb3.buffer(0).make_valid()
 
-    # Combo
-    if (not snb_dairy1.empty) and (not lcdb3.empty):
-        try:
-            lcdb3 = lcdb3.overlay(snb_dairy1, how='difference', keep_geom_type=True)
-        except Exception as error:
-            print(catch_id)
-            raise error
-        combo1 = pd.concat([snb_dairy1, lcdb3])
-    elif snb_dairy1.empty:
-        combo1 = lcdb3
-    else:
-        combo1 = snb_dairy1
+#     # Combo
+#     if (not snb_dairy1.empty) and (not lcdb3.empty):
+#         try:
+#             lcdb3 = lcdb3.overlay(snb_dairy1, how='difference', keep_geom_type=True)
+#         except Exception as error:
+#             print(catch_id)
+#             raise error
+#         combo1 = pd.concat([snb_dairy1, lcdb3])
+#     elif snb_dairy1.empty:
+#         combo1 = lcdb3
+#     else:
+#         combo1 = snb_dairy1
 
-    # Add in unimproveable areas
-    diff_geo = difference(poly, make_valid(combo1.geometry.unary_union))
-    if diff_geo is None:
-        diff_gpd = gpd.GeoDataFrame([{'phosphorus_yield': 0.3, 'nitrogen_yield': 2}], geometry=[poly], crs=2193)
-    else:
-        diff_gpd = gpd.GeoDataFrame([{'phosphorus_yield': 0.3, 'nitrogen_yield': 2}], geometry=[diff_geo], crs=2193)
-    diff_gpd['land_cover'] = ['Native Vegetation']
-    diff_gpd['typology'] = ['Native Vegetation']
-    combo5 = pd.concat([combo1.drop(['farm_type'], axis=1), diff_gpd])
-    combo5['area_ha'] = (combo5.geometry.area*0.0001).round(2)
+#     # Add in unimproveable areas
+#     diff_geo = difference(poly, make_valid(combo1.geometry.unary_union))
+#     if diff_geo is None:
+#         diff_gpd = gpd.GeoDataFrame([{'phosphorus_yield': 0.3, 'nitrogen_yield': 2}], geometry=[poly], crs=2193)
+#     else:
+#         diff_gpd = gpd.GeoDataFrame([{'phosphorus_yield': 0.3, 'nitrogen_yield': 2}], geometry=[diff_geo], crs=2193)
+#     diff_gpd['land_cover'] = ['Native Vegetation']
+#     diff_gpd['typology'] = ['Native Vegetation']
+#     combo5 = pd.concat([combo1.drop(['farm_type'], axis=1), diff_gpd])
+#     combo5['area_ha'] = (combo5.geometry.area*0.0001).round(2)
 
-    # Update lcdb if possible
-    lcs = combo5.land_cover.unique()
-    if ('Sheep and Beef' in lcs) and ('Low Producing Grassland' in lcs):
-        snb_mean = combo5.loc[combo5.land_cover == 'Sheep and Beef', ['nitrogen_yield', 'phosphorus_yield']].mean()
-        combo5.loc[combo5.land_cover == 'Low Producing Grassland', ['nitrogen_yield', 'phosphorus_yield']] = snb_mean.values
+#     # Update lcdb if possible
+#     lcs = combo5.land_cover.unique()
+#     if ('Sheep and Beef' in lcs) and ('Low Producing Grassland' in lcs):
+#         snb_mean = combo5.loc[combo5.land_cover == 'Sheep and Beef', ['nitrogen_yield', 'phosphorus_yield']].mean()
+#         combo5.loc[combo5.land_cover == 'Low Producing Grassland', ['nitrogen_yield', 'phosphorus_yield']] = snb_mean.values
 
-    if ('Dairy' in lcs) and ('High Producing Exotic Grassland' in lcs):
-        snb_mean = combo5.loc[combo5.land_cover == 'Dairy', ['nitrogen_yield', 'phosphorus_yield']].mean()
-        combo5.loc[combo5.land_cover == 'High Producing Exotic Grassland', ['nitrogen_yield', 'phosphorus_yield']] = snb_mean.values
+#     if ('Dairy' in lcs) and ('High Producing Exotic Grassland' in lcs):
+#         snb_mean = combo5.loc[combo5.land_cover == 'Dairy', ['nitrogen_yield', 'phosphorus_yield']].mean()
+#         combo5.loc[combo5.land_cover == 'High Producing Exotic Grassland', ['nitrogen_yield', 'phosphorus_yield']] = snb_mean.values
 
-    # if catch_id in params.typo_corrections:
-    #     typo_corr = params.typo_corrections[catch_id]
-    #     for typo, corr in typo_corr.items():
-    #         for ind, val in corr.items():
-    #             combo5.loc[combo5.typology == typo, ind] = val
+#     # if catch_id in params.typo_corrections:
+#     #     typo_corr = params.typo_corrections[catch_id]
+#     #     for typo, corr in typo_corr.items():
+#     #         for ind, val in corr.items():
+#     #             combo5.loc[combo5.typology == typo, ind] = val
 
-    return combo5
+#     return combo5
 
 
-def calc_reductions(lake_id, poly, lcdb, snb_dairy):
+def calc_reductions(lake_id, poly, lcdb1, snb_dairy1):
     """
 
     """
     # Land cover
-    lcdb1 = lcdb.loc[lcdb.sindex.query(poly, predicate="intersects")].copy()
+    # lcdb1 = lcdb.loc[lcdb.sindex.query(poly, predicate="intersects")].copy()
     if not lcdb1.empty:
         lcdb1b = intersection(lcdb1.geometry.tolist(), poly)
         lcdb1['geometry'] = lcdb1b
@@ -547,7 +550,7 @@ def calc_reductions(lake_id, poly, lcdb, snb_dairy):
         # lc3['geometry'] = lc3.buffer(0.5).simplify(10)
 
     ## SnB and Dairy
-    snb_dairy1 = snb_dairy.loc[snb_dairy.sindex.query(poly, predicate="intersects")].copy()
+    # snb_dairy1 = snb_dairy.loc[snb_dairy.sindex.query(poly, predicate="intersects")].copy()
     if not snb_dairy1.empty:
         snb_dairy1b = intersection(snb_dairy1.geometry.tolist(), poly)
         snb_dairy1['geometry'] = snb_dairy1b

@@ -28,12 +28,14 @@ pd.options.display.max_columns = 10
 # features_cols = ['Climate', 'Slope', 'Drainage', 'Wetness']
 
 
-yields0 = pd.read_csv(params.yields_csv_path).rename(columns={'TN': 'nitrogen_yield', 'TP': 'phosphorus_yield'})
-slope_geo0 = gpd.read_file(params.yields_gpkg_path, layer='Slope', include_fields=['Srinivasan.slope.type']).rename(columns={'Srinivasan.slope.type': 'slope'})
-slope_geo0['geometry'] = slope_geo0['geometry'].simplify(10)
+farm_yields = pd.read_csv(params.yields_csv_path).rename(columns={'TN': 'nitrogen_yield', 'TP': 'phosphorus_yield'})
+slope_geo = gpd.read_file(params.yields_gpkg_path, layer='Slope', include_fields=['Srinivasan.slope.type']).rename(columns={'Srinivasan.slope.type': 'slope'})
+slope_geo['geometry'] = slope_geo['geometry'].simplify(10)
+slope_geo = slope_geo.explode(index_parts=False).reset_index(drop=True)
 
-moisture_geo0 = gpd.read_file(params.yields_gpkg_path, layer='Moisture', include_fields=['Srinivasan.Moisture.Type']).rename(columns={'Srinivasan.Moisture.Type': 'moisture'})
-moisture_geo0['geometry'] = moisture_geo0['geometry'].simplify(10)
+moisture_geo = gpd.read_file(params.yields_gpkg_path, layer='Moisture', include_fields=['Srinivasan.Moisture.Type']).rename(columns={'Srinivasan.Moisture.Type': 'moisture'})
+moisture_geo['geometry'] = moisture_geo['geometry'].simplify(10)
+moisture_geo = moisture_geo.explode(index_parts=False).reset_index(drop=True)
 
 ### SnB
 # snb_yields = yields0[yields0.land_cover == 'Sheep and Beef'].drop('land_cover', axis=1).copy()
@@ -42,7 +44,8 @@ moisture_geo0['geometry'] = moisture_geo0['geometry'].simplify(10)
 # Determine missing typologies for snb
 # snb_geo = gpd.read_feather(params.snb_geo_clean_path)
 # dairy_geo = gpd.read_feather(params.dairy_geo_clean_path)
-snb_dairy0 = gpd.read_feather(params.snb_dairy_red_path).drop(['phosphorus_yield', 'nitrogen_yield', 'phosphorus_reduction', 'nitrogen_reduction'], axis=1)
+snb_dairy = gpd.read_feather(params.snb_dairy_red_path).drop(['phosphorus_yield', 'nitrogen_yield', 'phosphorus_reduction', 'nitrogen_reduction'], axis=1)
+snb_dairy = snb_dairy.explode(index_parts=False).reset_index(drop=True)
 
 # lcdb0 = gpd.read_feather(params.lcdb_clean_path)
 # lcdb_yields = pd.read_csv(params.lcdb_yields_csv_path).drop(['sediment_yield'], axis=1)
@@ -65,13 +68,18 @@ if __name__ == '__main__':
     with concurrent.futures.ProcessPoolExecutor(max_workers=10, mp_context=mp.get_context("spawn")) as executor:
         futures = {}
         with booklet.open(params.lakes_catch_major_path) as catches:
-            for catch_id, catch in catches.items():
+            for lake_id, catch in catches.items():
                 # if catch_id == 3047194:
                 #     d
                 poly = gpd.GeoSeries([catch], crs=4326).to_crs(2193).iloc[0]
 
-                f1 = executor.submit(utils.calc_farm_yields, poly, snb_dairy0, yields0, slope_geo0, moisture_geo0)
-                futures[f1] = catch_id
+                snb_dairy1 = snb_dairy.loc[snb_dairy.sindex.query(poly, predicate="intersects")].copy()
+                if not snb_dairy1.empty:
+                    slope_geo0 = slope_geo.loc[slope_geo.sindex.query(poly, predicate="intersects")].copy()
+                    moisture_geo0 = moisture_geo.loc[moisture_geo.sindex.query(poly, predicate="intersects")].copy()
+
+                    f1 = executor.submit(utils.calc_farm_yields, poly, snb_dairy1, farm_yields, slope_geo0, moisture_geo0)
+                    futures[f1] = lake_id
 
         # Save results
         with booklet.open(params.lakes_farm_yields_blt_path, 'n', value_serializer='gpd_zstd', key_serializer='uint4', n_buckets=1607) as f:
