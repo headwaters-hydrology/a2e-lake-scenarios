@@ -58,6 +58,13 @@ lakes_indicator_dict = {
     'Secchi': 'Secchi depth'
     }
 
+indicator_rounding = {
+    'TN': 0,
+    'TP': 0,
+    'CHLA': 1,
+    'Secchi': 2
+    }
+
 indicator_str_format = {
     'TN': '{:.0f}',
     'TP': '{:.0f}',

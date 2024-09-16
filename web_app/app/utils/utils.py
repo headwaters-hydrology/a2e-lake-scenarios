@@ -434,6 +434,8 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
         else:
             y_median_scenario = float(stats0['Scenario (measured)'])
 
+        measured = True
+
     except:
         y_median_current = float(stats0['Current (modelled)'])
         if stats0['Scenario (modelled)'] == 'Press the Run catchment scenario button':
@@ -449,6 +451,8 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
         y_max_plot = ymax
         start_x = 0
         end_x = 1
+
+        measured = False
 
     # print(stats)
 
@@ -575,7 +579,11 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
             )
         )
     fig.update_yaxes(range=y_range)
-    fig.update_xaxes(range=[start_x, end_x])
+
+    if measured:
+        fig.update_xaxes(range=[start_x, end_x])
+    else:
+        fig.update_xaxes(range=[start_x, end_x], visible=False)
 
     return fig
 
@@ -589,38 +597,6 @@ def make_graph(fig=None):
     else:
         return html.Div(id='ts_plot_div', style={'width': '100%', 'height': 'auto', 'margin': "auto", "display": "block"})
 
-
-def calc_lake_conc_change(inflow_ratio_n, inflow_ratio_p, indicator, max_depth, residence_time):
-    """
-
-    """
-    if indicator in ('TP', 'CHLA', 'SECCHI'):
-        if max_depth > 7.5:
-            b = 1 + 0.44*(residence_time**0.13)
-            r_lake_p = inflow_ratio_p**(1/b)
-        else:
-            r_lake_p = inflow_ratio_p
-
-    if indicator in ('TN', 'CHLA', 'SECCHI'):
-        r_lake_n = inflow_ratio_n**0.54
-
-    if indicator in ('CHLA', 'SECCHI'):
-        r_lake_chla = (r_lake_n**0.65) * (r_lake_p**0.59)
-
-    if indicator == 'TP':
-        return r_lake_p
-    elif indicator == 'TN':
-        return r_lake_n
-    elif indicator == 'CHLA':
-        return r_lake_chla
-    elif indicator == 'SECCHI':
-        if max_depth >= 20:
-            r_lake = r_lake_chla**0.9
-        else:
-            r_lake = r_lake_chla**0.38
-        return r_lake
-    else:
-        raise ValueError('No calc for indicator')
 
 
 

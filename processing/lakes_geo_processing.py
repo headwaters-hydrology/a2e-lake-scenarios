@@ -67,7 +67,7 @@ def lakes_points_poly_process():
 
     lakes_poly1 = lakes_poly1.drop_duplicates(subset=['LFENZID'])
 
-    lakes_poly2 = lakes_poly1.loc[lakes_poly0.LFENZID.isin(lake_ids), ['LFENZID', 'name', 'residence_time', 'max_depth', 'mean_depth', 'p_residence_time', 'n_residence_time', 'geometry']].reset_index(drop=True).copy()
+    lakes_poly2 = lakes_poly1.loc[lakes_poly0.LFENZID.isin(lake_ids), ['LFENZID', 'name', 'residence_time', 'max_depth', 'mean_depth', 'p_residence_time', 'n_residence_time', 'area_ha', 'geometry']].reset_index(drop=True).copy()
 
     with booklet.open(params.lakes_poly_gbuf_path, 'n', value_serializer='zstd', key_serializer='uint2', n_buckets=4001) as s:
         for LFENZID in lakes_poly2.LFENZID:

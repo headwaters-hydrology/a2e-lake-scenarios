@@ -108,15 +108,15 @@ lake_poly_style_handle = assign("""function style(feature) {
 
 # lake_id = 11133
 # indicator = 'TN'
-# indicator = 'ECOLI'
+# indicator = 'Secchi'
 # lake_name = 'Lake Rotorua'
-# lake_data = {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [176.271753, -38.079008]}, 'id': '11133', 'properties': {'name': 'Lake Rotorua', 'residence_time': 886.1516098743485, 'max_depth': 44.79999923706055, 'mean_depth': 14.93333275968287, 'p_residence_time': 0.9674990155143122, 'n_residence_time': 1, 'regional_council': 'Bay of Plenty', 'cluster': False}}
+# lake_data = {'name': 'Lake Rotorua', 'residence_time': 886.1516098743485, 'max_depth': 44.79999923706055, 'mean_depth': 14.93333275968287, 'p_residence_time': 0.9674990155143122, 'n_residence_time': 1, 'regional_council': 'Bay of Plenty', 'area_ha': 2000, 'cluster': False}
 
 # lake_id = 54734
 # indicator = 'TN'
-# indicator = 'ECOLI'
+# indicator = 'Secchi'
 # lake_name = 'Lake Taupo (Taupomoana)'
-# lake_data = {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [175.894516, -38.795854]}, 'id': '54734', 'properties': {'name': 'Lake Taupo                    (Taupomoana)', 'residence_time': 3506.1802279694543, 'max_depth': 162.8000030517578, 'mean_depth': 54.266667837818886, 'p_residence_time': 0.9833922927018965, 'n_residence_time': 1, 'regional_council': 'Waikato', 'cluster': False}}
+# lake_data = {'name': 'Lake Taupo                    (Taupomoana)', 'residence_time': 3506.1802279694543, 'max_depth': 162.8000030517578, 'mean_depth': 54.266667837818886, 'p_residence_time': 0.9833922927018965, 'n_residence_time': 1, 'regional_council': 'Waikato', 'area_ha': 2000, 'cluster': False}
 
 ###############################################
 ### Initial processing
@@ -211,7 +211,7 @@ def layout():
                                     'font-size': 12,
                                     'font-family':'sans-serif'
                                 },
-                                columns=[{'name': name, 'id': key, 'editable': (key in ('mitigation', 'new_land_area'))} for key, name in param.tbl_cols_dict.items()],
+                                columns=[{'name': name, 'id': key, 'editable': (key in ('phosphorus', 'nitrogen', 'new_land_area'))} for key, name in param.tbl_cols_dict.items()],
                                 id='lc_tbl',
                                 merge_duplicate_headers=True,
                                 style_header={
@@ -421,7 +421,7 @@ def update_lake_id(feature):
             lake_id = int(feature['id'])
             lake_data = feature['properties']
             lake_name = lake_data['name']
-            print(lake_id)
+            # print(lake_id)
             # print(feature)
 
     return lake_id, lake_data, lake_name
@@ -666,7 +666,7 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                 results_str1 = param.indicator_str_format[indicator]
                 meas_median = stats0[indicator]
     
-                stats[indicator].append({'name': 'Current (measured)', 'conc': results_str1.format(round(meas_median, 0))})
+                stats[indicator].append({'name': 'Current (measured)', 'conc': results_str1.format(meas_median)})
 
             scenario_text = 'Scenario (measured)'
         except:
@@ -676,7 +676,7 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                 results_str1 = param.indicator_str_format[indicator]
                 model_median = stats0[indicator]
         
-                stats[indicator].append({'name': 'Current (modelled)', 'conc': results_str1.format(round(model_median, 0))})
+                stats[indicator].append({'name': 'Current (modelled)', 'conc': results_str1.format(model_median)})
 
             scenario_text = 'Scenario (modelled)'
 
@@ -768,248 +768,333 @@ def update_box_plot(tab, stats, lake_id):
     return utils.make_graph(fig)
 
 
-# @callback(
-#         Output('dl_pdf', 'data'),
-#         Input("dl_btn", "n_clicks"),
-#         # State('ts_plot', 'figure'),
-#         State('lc_tbl', 'data'),
-#         State('stats', 'data'),
-#         State('lake_id', 'data'),
-#         State('lake_name', 'children'),
-#         # State('nzsegment', 'data'),
-#         State('conc_factor', 'data'),
-#         State('indicator', 'value'),
-#         State('lake_data', 'data'),
-#         prevent_initial_call=True,
-#         )
-# def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, indicator, lake_data):
-#     """
+@callback(
+        Output('dl_pdf', 'data'),
+        Input("dl_btn", "n_clicks"),
+        # State('ts_plot', 'figure'),
+        State('lc_tbl', 'data'),
+        State('stats', 'data'),
+        State('lake_id', 'data'),
+        State('lake_name', 'children'),
+        # State('nzsegment', 'data'),
+        State('conc_factors', 'data'),
+        State('lake_data', 'data'),
+        prevent_initial_call=True,
+        )
+def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, lake_data):
+    """
 
-#     """
-#     ## Pre-calcs
-#     if indicator == 'ECOLI':
-#         units = 'CFU/100ml'
-#     else:
-#         units = 'mg/l'
+    """
+    ## Pre-calcs
+    # Determine whether measured or modelled
+    measured = True
+    measured_text = ' (measured)'
+    for l in stats['TN']:
+        if 'modelled' in l['name']:
+            measured = False
+            measured_text = ' (modelled)'
 
-#     current_scenario = {l['name']: float(l['conc']) for l in stats if l['name'] in ('Current', 'Scenario')}
-#     improve_perc = int(round((1 - (current_scenario['Scenario']/current_scenario['Current'])) * 100))
-#     improve_text = 'improvement'
-#     if improve_perc < 0:
-#         improve_perc = improve_perc * -1
-#         improve_text = 'degredation'
+    current_text = 'Current' + measured_text
+    scenario_text = 'Scenario' + measured_text
 
-#     stats0 = utils.get_value(param.lakes_wq_stats_path, (lake_id, indicator))
+    current_scenario = {}
+    improve_perc_dict = {}
+    improve_text_dict = {}
+    for ind, res in stats.items():
+        ind_stats = {l['name'].split(' (')[0]: float(l['conc']) for l in res if l['name'] in (current_text, scenario_text, 'Reference')}
+        current_scenario[ind] = ind_stats
 
-#     obs_count = stats0['count']
-#     obs_min_date = stats0['from_date']
-#     obs_max_date = stats0['to_date']
-#     obs_median = current_scenario['Current']
-#     scenario_conc = current_scenario['Scenario']
-#     ref_mean, ref_lower, ref_upper = utils.sep_reference_values([s['conc'] for s in stats if s['name'] == 'Reference'][0])
-#     nps_check = [True for s in stats if s['name'] == 'Bottom line']
+        improve_perc = int(round((1 - (ind_stats['Scenario']/ind_stats['Current'])) * 100))
 
-#     lc_data = utils.get_value(param.lakes_lc_red_yields_path, lake_id).sort_index()
-#     lc_data1 = lc_data[[col for col in lc_data.columns if 'reduction' not in col]].round(2).reset_index().copy()
-#     lc_data1['area_ha'] = lc_data1['area_ha'].round().astype(int)
-#     tot_area = lc_data1['area_ha'].sum()
+        if ind == 'Secchi':
+            if improve_perc < 0:
+                improve_perc = improve_perc * -1
+                improve_text = 'improvement'
+            else:
+                improve_text = 'degredation'
+        else:
+            if improve_perc < 0:
+                improve_perc = improve_perc * -1
+                improve_text = 'degredation'
+            else:
+                improve_text = 'improvement'
 
-#     if indicator != 'ECOLI':
-#         ind_name = param.rivers_indicator_dict[indicator].lower()
-#     else:
-#         ind_name = param.rivers_indicator_dict[indicator]
-#     # river_name = site_data['properties']['Catchment']
-#     agency = lake_data['properties']['Agency']
+        improve_perc_dict[ind] = improve_perc
+        improve_text_dict[ind] = improve_text
 
-#     # box_plot_fig = utils.decode_obj(box_plot_fig_enc)
-#     # print(geometry)
-#     # geom = orjson.loads(geometry.encode())
+    ## Conc tbl
+    row_names = ['Band A', 'Band B', 'Band C', 'Band D', 'Bottom line', 'Reference']
+    if measured:
+        row_names += ['Current (measured)', 'Scenario (measured)']
+    else:
+        row_names += ['Current (modelled)', 'Scenario (modelled)']
 
-#     ## plot the catchment polygon and river network
-#     fig, ax = plt.subplots()
+    conc_tbl_data = []
+    for row_name in row_names:
+        row = [row_name]
+        for ind in param.lakes_indicator_dict:
+            val = None
+            for data in stats[ind]:
+                if data['name'] == row_name:
+                    val = data['conc']
+                    row.append(data['conc'])
+                    break
+            if val is None:
+                row.append('')
+        conc_tbl_data.append(row)
 
-#     ## Rivers
-#     lakes_reaches_gbuf = utils.get_value(param.lakes_catch_reaches_gbuf_path, lake_id)
+    ## Measured data
+    if measured:
+        stats0 = utils.get_value(param.lakes_moni_data_path, lake_id)
+    
+        grp1 = stats0.reset_index().groupby('indicator')
+    
+        # obs_count = grp1['value'].count().to_dict()
+        obs_min_dates = grp1['date'].first().to_dict()
+        obs_max_dates = grp1['date'].last().to_dict()
+        obs_medians = grp1['value'].median().to_dict()
 
-#     lakes_reaches_dict = geobuf.decode(lakes_reaches_gbuf)
-#     if lakes_reaches_dict is not None:
-#         rivers_geo = gpd.GeoDataFrame.from_features(lakes_reaches_dict['features'], crs=4326)
-#         rivers_geo.plot(ax=ax, alpha=0.3)
+    # scenario_conc = current_scenario['Scenario']
+    # ref_mean, ref_lower, ref_upper = utils.sep_reference_values([s['conc'] for s in stats if s['name'] == 'Reference'][0])
+    # nps_check = [True for s in stats if s['name'] == 'Bottom line']
 
-#     ## Catchment
-#     catch_gbuf = utils.get_value(param.lakes_catch_gbuf_path, lake_id)
+    lc_data = utils.get_value(param.lakes_lc_red_yields_path, lake_id).sort_index()
+    lc_data1 = lc_data[[col for col in lc_data.columns if 'reduction' not in col]].round(2).reset_index().copy()
+    lc_data1['area_ha'] = lc_data1['area_ha'].round().astype(int)
+    tot_area = lc_data1['area_ha']['area_ha'].sum()
 
-#     catch_dict = geobuf.decode(catch_gbuf)
-#     catch_geo = gpd.GeoDataFrame.from_features(catch_dict['features'], crs=4326)
-#     catch_geo.plot(ax=ax, color='lightgrey', edgecolor='black', alpha=0.6)
+    # if indicator != 'ECOLI':
+    #     ind_name = param.rivers_indicator_dict[indicator].lower()
+    # else:
+    #     ind_name = param.lakes_indicator_dict[indicator]
+    # river_name = site_data['properties']['Catchment']
+    agency = lake_data['regional_council']
+    lake_area = '{:,.0f}'.format(lake_data['area_ha'])
+    residence_time = '{:,.0f}'.format(lake_data['residence_time'])
+    max_depth = '{:,.1f}'.format(lake_data['max_depth'])
 
-#     ## Site location
-#     point = gpd.GeoSeries([Point(lake_data['geometry']['coordinates'])], crs=4326)
-#     point.plot(ax=ax, color='black')
-#     # ax.set_xlim(x_min - b, x_max + b)
-#     # ax.set_ylim(y_min - b, y_max + b)
-#     # ax.set_extent((x_min - b, y_min - b, x_max + b, y_max + b))
-#     cx.add_basemap(ax, crs=catch_geo.crs, source=cx.providers.OpenStreetMap['Mapnik'])
+    # box_plot_fig = utils.decode_obj(box_plot_fig_enc)
+    # print(geometry)
+    # geom = orjson.loads(geometry.encode())
 
-#     fig.tight_layout()
+    ## plot the catchment polygon and river network
+    fig, ax = plt.subplots()
 
-#     ## Make the document
-#     lc_tbl_dict = {k: l[1] for k, l in param.tbl_cols_dict.items()}
+    ## Rivers
+    lakes_reaches_gbuf = utils.get_value(param.lakes_catch_reaches_path, lake_id)
 
-#     with tempfile.TemporaryDirectory() as path:
-#         doc = Document(os.path.join(path, lake_id), geometry_options={"right": "2cm", "left": "2cm"})
-#         doc.packages.append(Package('array'))
-#         doc.packages.append(Package('datetime2'))
-#         doc.packages.append(Package('float'))
-#         # right_fixed_col = ColumnType('R', 'p{#1}', '\raggedright')
-#         doc.preamble.append(NoEscape(r'\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}'))
-#         doc.preamble.append(NoEscape(r'\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}'))
-#         doc.preamble.append(NoEscape(r'\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}'))
+    lakes_reaches_dict = geobuf.decode(lakes_reaches_gbuf)
+    if lakes_reaches_dict is not None:
+        lakes_geo = gpd.GeoDataFrame.from_features(lakes_reaches_dict['features'], crs=4326)
+        lakes_geo.plot(ax=ax, alpha=0.3)
 
-#         doc.preamble.append(Command('title', f'Scenario builder results for {ind_name} at {lake_name}'))
-#         # doc.preamble.append(catch_name)
-#         # doc.preamble.append(Command('date', NoEscape(r'\today')))
-#         # doc.preamble.append(NoEscape(r'\today'))
-#         doc.append(NoEscape(r'\maketitle'))
+    ## Catchment
+    catch_gbuf = utils.get_value(param.lakes_catch_path, lake_id)
 
-#         ## Catchment location section
-#         with doc.create(Section('Monitoring site and catchment information')):
-#             text = f'The user-selected site is named "{lake_name}" and monitored by {agency}. The site is also named "{lake_id}" by DOC. '
+    catch_dict = geobuf.decode(catch_gbuf)
+    catch_geo = gpd.GeoDataFrame.from_features(catch_dict['features'], crs=4326)
+    catch_geo.plot(ax=ax, color='lightgrey', edgecolor='black', alpha=0.6)
 
-#             # if catch_name != 'Unnamed':
-#             #     text += f'It is located within the larger {catch_name} catchment '
+    ## lake polygon location
+    poly_gbuf = utils.get_value(param.lakes_poly_path, lake_id)
+    poly_dict = geobuf.decode(poly_gbuf)
+    poly_geo = gpd.GeoDataFrame.from_features(poly_dict['features'], crs=4326)
+    poly_geo.plot(ax=ax, color='lightblue', edgecolor='black', alpha=1)
 
-#             doc.append(text)
-#             doc.append(NoEscape(r'(Figure \ref{fig:catchment}).'))
-#             # position='htbp'
-#             with doc.create(Figure(position='H')) as plot:
-#                 plot.add_plot(width=NoEscape(r'0.8\textwidth'))
-#                 plot.add_caption(f'Catchment location with a total area of {tot_area:,} hectares. The black dot is the monitoring site.')
-#                 plot.append(Command('label', 'fig:catchment'))
+    # point = gpd.GeoSeries([Point(lake_data['geometry']['coordinates'])], crs=4326)
+    # point.plot(ax=ax, color='black')
+    # ax.set_xlim(x_min - b, x_max + b)
+    # ax.set_ylim(y_min - b, y_max + b)
+    # ax.set_extent((x_min - b, y_min - b, x_max + b, y_max + b))
+    cx.add_basemap(ax, crs=catch_geo.crs, source=cx.providers.OpenStreetMap['Mapnik'])
 
-#         ## Section 2
-#         # sec2 =  Section('Land areas and mitigations')
-#         sec2 =  Section('Current estimates')
-#         # sec2.append(NoEscape(r'The current state and user-defined scenario for the land areas and mitigations are shown in Table \ref{tab:mitigations}. The user should refer to the user guide for more details on the background and methodology of the calculations.'))
-#         doc.append(sec2)
+    fig.tight_layout()
 
-#         # 2.1 - Indicator
-#         sec2a = Subsection('Measured indicator')
-#         sec_text = f'The user-selected water quality indicator is {ind_name}. The current estimate of the median concentration for the 5 year period from an initial observation at {obs_min_date} to a final observation at {obs_max_date} is {obs_median} {units} '
-#         sec_text += r'(Table \ref{tab:conc}). '
-#         sec_text += f'The estimated reference median concentration is {ref_mean} {units} with 5th and 95th percentiles of {ref_lower} and {ref_upper} {units}. The total number of observations during this period was {obs_count}. '
-#         if nps_check:
-#             sec_text += r'The relevant NPS-FM 2020 bands associated with the median concentration attribute states are listed in Table \ref{tab:conc}. '
-#         sec_text += r'Table \ref{tab:mitigations} '
-#         sec_text += f'lists the land use composition and estimated contribution of each land use to the total load of {ind_name} at the monitoring site. '
-#         if indicator != 'ECOLI':
-#             sec_text += r'Table \ref{tab:yields} shows the areas and loss rates of each land use in the selected catchment used in the Scenario Builder WebApp.  '
+    ## Make the document
+    lc_tbl_dict = {k: l[1] for k, l in param.tbl_cols_dict.items()}
 
-#         sec2a.append(NoEscape(sec_text))
+    with tempfile.TemporaryDirectory() as path:
+        doc = Document(os.path.join(path, f'lake_{lake_id}'), geometry_options={"right": "2cm", "left": "2cm"})
+        doc.packages.append(Package('array'))
+        doc.packages.append(Package('datetime2'))
+        doc.packages.append(Package('float'))
+        # right_fixed_col = ColumnType('R', 'p{#1}', '\raggedright')
+        doc.preamble.append(NoEscape(r'\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}'))
+        doc.preamble.append(NoEscape(r'\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}'))
+        doc.preamble.append(NoEscape(r'\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}'))
 
-#         doc.append(sec2a)
+        if lake_name == 'No name':
+            doc.preamble.append(Command('title', f'Scenario builder results for the lake with the DOC lake id {lake_id}'))
+        else:
+            doc.preamble.append(Command('title', f'Scenario builder results for {lake_name}'))
+        # doc.preamble.append(catch_name)
+        # doc.preamble.append(Command('date', NoEscape(r'\today')))
+        # doc.preamble.append(NoEscape(r'\today'))
+        doc.append(NoEscape(r'\maketitle'))
 
-#         ## Conc table
-#         header = ['Name', f'Median concentration {units}']
-#         base_tbl2 = Table(position="htb")
-#         base_tbl2.add_caption('Site median concentrations')
-#         base_tbl2.append(NoEscape(r'\centering'))
-#         data_table2 = Tabular("| l | R{0.20\linewidth} |")
-#         data_table2.add_hline()
-#         data_table2.add_row(header, strict=False)
-#         data_table2.add_hline()
-#         for values in stats:
-#             row = [values['name'], values['conc']]
-#             data_table2.add_row(row, strict=False)
-#         data_table2.add_hline()
-#         base_tbl2.append(data_table2)
-#         # base_tbl2.add_caption('Site median concentrations')
-#         base_tbl2.append(Command('label', 'tab:conc'))
+        ## Catchment location section
+        with doc.create(Section('Monitoring site and catchment information')):
+            if lake_name == 'No name':
+                text = f'The user-selected lake has no official name and is within {agency}. '
+            else:
+                text = f'The user-selected lake is named "{lake_name}" and is within {agency}. '
 
-#         doc.append(base_tbl2)
+            text += f'The lake is also given the ID of {lake_id} by DOC. The lake has an estimated area of {lake_area} ha, a maximum depth of {max_depth} m, and a water residence time of {residence_time} years. The surrounding surface water catchment has an estimated area of {tot_area:,} ha '
 
-#         ## Land use table
-#         base_tbl = Table(position="htb")
-#         base_tbl.add_caption('Land area contributions and mitigations')
-#         base_tbl.append(NoEscape(r'\centering'))
-#         data_table = Tabular('| l | R{0.06\linewidth} | R{0.13\linewidth} | R{0.13\linewidth} | R{0.06\linewidth} | R{0.13\linewidth} |')
-#         data_table.add_hline()
-#         data_table.add_row(['', MultiColumn(2, align='c|', data='Current'), MultiColumn(3, align='c|', data='Scenario')], strict=False)
-#         data_table.add_row(list(lc_tbl_dict.values()), strict=False)
-#         data_table.add_hline()
-#         # data_table.end_table_header()
-#         # data_table.add_hline()
-#         # data_table.add_row((MultiColumn(3, align='r',
-#         #                     data='Continued on Next Page'),))
-#         # data_table.add_hline()
-#         # data_table.end_table_footer()
-#         # data_table.add_hline()
-#         # data_table.add_row((MultiColumn(3, align='r',
-#         #                     data='Not Continued on Next Page'),))
-#         # data_table.add_hline()
-#         # data_table.end_table_last_footer()
-#         for values in lc_tbl:
-#             row = [str(int(val)) if isinstance(val, (float, int)) else val for val in values.values()]
-#             data_table.add_row(row, strict=False)
-#         data_table.add_hline()
-#         base_tbl.append(data_table)
-#         # base_tbl.add_caption('Land areas and mitigations')
-#         base_tbl.append(Command('label', 'tab:mitigations'))
+            # if catch_name != 'Unnamed':
+            #     text += f'It is located within the larger {catch_name} catchment '
 
-#         doc.append(base_tbl)
+            doc.append(text)
+            doc.append(NoEscape(r'(Figure \ref{fig:catchment}).'))
+            # position='htbp'
+            with doc.create(Figure(position='H')) as plot:
+                plot.add_plot(width=NoEscape(r'0.8\textwidth'))
+                plot.add_caption('The lake and the associated surface water catchment. ')
+                plot.append(Command('label', 'fig:catchment'))
 
-#         ## Land use yields and areas
-#         if indicator != 'ECOLI':
-#             base_tbl = Table(position="htb")
-#             base_tbl.add_caption('Current catchment land use areas and loss rates')
-#             base_tbl.append(NoEscape(r'\centering'))
-#             data_table = Tabular('| l | R{0.10\linewidth} | R{0.10\linewidth} | R{0.10\linewidth} |')
-#             data_table.add_hline()
-#             data_table.add_row(['', '', MultiColumn(2, align='c|', data='Loss rate (kg/ha/yr)')], strict=False)
-#             data_table.add_row(['Land use', 'Area (ha)', 'Phosphorus', 'Nitrogen'], strict=False)
-#             data_table.add_hline()
-#             # data_table.end_table_header()
-#             # data_table.add_hline()
-#             # data_table.add_row((MultiColumn(3, align='r',
-#             #                     data='Continued on Next Page'),))
-#             # data_table.add_hline()
-#             # data_table.end_table_footer()
-#             # data_table.add_hline()
-#             # data_table.add_row((MultiColumn(3, align='r',
-#             #                     data='Not Continued on Next Page'),))
-#             # data_table.add_hline()
-#             # data_table.end_table_last_footer()
-#             for grp, values in lc_data1.iterrows():
-#                 row = values.values.tolist()
-#                 data_table.add_row(row, strict=False)
-#             data_table.add_hline()
-#             base_tbl.append(data_table)
-#             # base_tbl.add_caption('Land areas and mitigations')
-#             base_tbl.append(Command('label', 'tab:yields'))
+        ## Section 1
+        sec1 =  Section('Land area contributions and mitigations')
+        doc.append(sec1)
 
-#             doc.append(base_tbl)
+        sec_text = r"The current and scenario land areas and mitigations are shown in Table \ref{tab:mitigations}. "
+        sec_text += "The nitrogen and phosphorus mitigations are used to estimate the improvements across all indicators. "
 
-#         ## Section 3
-#         sec3 = Section('Scenario outcomes')
-#         doc.append(sec3)
+        doc.append(NoEscape(sec_text))
 
-#         # Indicator
-#         sec3a = Subsection('Measured indicator')
-#         sec_text = r'Given the user-defined mitigations/land use change shown in Table \ref{tab:mitigations}, '
-#         sec_text += f'the estimated {improve_text} at the site is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units} '
-#         sec_text += r'(Table \ref{tab:conc}). Refer to the user guide for more details on the background and methodology of the calculations.'
+        ## Land use table
+        base_tbl = Table(position="htb")
+        base_tbl.add_caption('Land area contributions and mitigations')
+        base_tbl.append(NoEscape(r'\centering'))
+        data_table = Tabular('| l | R{0.06\linewidth} | R{0.08\linewidth} | R{0.10\linewidth} | R{0.12\linewidth} | R{0.12\linewidth} | R{0.06\linewidth} |')
+        data_table.add_hline()
+        data_table.add_row(['', MultiColumn(3, align='c|', data='Current'), MultiColumn(3, align='c|', data='Scenario')], strict=False)
+        data_table.add_row(list(lc_tbl_dict.values()), strict=False)
+        data_table.add_hline()
+        for values in lc_tbl:
+            row = [str(int(val)) if isinstance(val, (float, int)) else val for val in values.values()]
+            data_table.add_row(row, strict=False)
+        data_table.add_hline()
+        base_tbl.append(data_table)
+        # base_tbl.add_caption('Land areas and mitigations')
+        base_tbl.append(Command('label', 'tab:mitigations'))
 
-#         sec3a.append(NoEscape(sec_text))
-#         doc.append(sec3a)
+        doc.append(base_tbl)
 
-#         doc.generate_pdf(clean_tex=True)
+        table_mitigations = r'\ref{tab:mitigations}'
 
-#         pdf_path = os.path.join(path, f'{lake_id}.pdf')
-#         with open(pdf_path, 'rb') as f:
-#             # pdf_bytes = io.BytesIO(f.read())
-#             pdf_bytes = f.read()
+        ## Section 2
+        # sec2 =  Section('Land areas and mitigations')
+        sec2 =  Section('Current estimates')
+        doc.append(sec2)
 
-#     return dcc.send_bytes(pdf_bytes, f'{lake_id}.pdf', 'pdf')
+        header = ['Name', 'Total nitrogen (mg/m³)', 'Total phosphorus (mg/m³)', 'Chlorophyll a (mg/m³)', 'Secchi depth (m)']
+        base_tbl2 = Table(position="htb")
+        base_tbl2.add_caption('Site median concentrations')
+        base_tbl2.append(NoEscape(r'\centering'))
+        data_table2 = Tabular("| l | R{0.09\linewidth} | R{0.11\linewidth} | R{0.12\linewidth} | R{0.06\linewidth} |")
+        data_table2.add_hline()
+        data_table2.add_row(header, strict=False)
+        data_table2.add_hline()
+        for row in conc_tbl_data:
+            # row = [values['name'], values['conc']]
+            data_table2.add_row(row, strict=False)
+        data_table2.add_hline()
+        base_tbl2.append(data_table2)
+        # base_tbl2.add_caption('Site median concentrations')
+        base_tbl2.append(Command('label', 'tab:conc'))
+
+        doc.append(base_tbl2)
+
+        table_conc_ref = r'\ref{tab:conc}'
+
+        if measured:
+            sec_text = f'This lake has monitoring data and subsequently the median concentration estimates are from the measured data (Table {table_conc_ref}). '
+        else:
+            sec_text = f'This lake does not habe monitoring data and subsequently the median concentration estimates are from modelled results (Table {table_conc_ref}). '
+
+        doc.append(NoEscape(sec_text))
+
+        # 2.1 - Indicators
+        # sec2a = Subsection('Indicators')
+        for ind, res in current_scenario.items():
+            # rounding = param.indicator_rounding[ind]
+            rounding_str = param.indicator_str_format[ind]
+            if ind == 'Secchi':
+                units = 'm'
+            else:
+                units = 'mg/m³'
+
+            ind_name = param.lakes_indicator_dict[ind]
+            # sec2a = Subsection(f'{ind_name}')
+
+            if measured:
+                obs_min_date = str(obs_min_dates[ind])
+                obs_max_date = str(obs_max_dates[ind])
+                obs_median = rounding_str.format(obs_medians[ind])
+
+                sec_text = f'The {ind_name.lower()} current measured estimate of the median concentration for the 5 year period from an initial observation at {obs_min_date} to a final observation at {obs_max_date} is {obs_median} {units}. '
+            else:
+                model_median = rounding_str.format(res['Current'])
+                sec_text = f'The {ind_name.lower()} current modelled estimate of the median concentration is {model_median} {units}. '
+
+            # table_conc_ref = r'\ref{tab:conc}'
+
+            # sec_text += f'(Table {table_conc_ref}). '
+
+            ref_median = rounding_str.format(res['Reference'])
+
+            sec_text += f'The estimated reference median concentration is {ref_median} {units}. '
+
+            doc.append(NoEscape(sec_text))
+
+        sec_text = f'The relevant NPS-FM 2020 bands associated with the median concentration attribute states are also listed in Table {table_conc_ref}. '
+
+        doc.append(NoEscape(sec_text))
+
+        ## Section 3
+        sec3 = Section('Scenario outcomes')
+        doc.append(sec3)
+
+        sec_text = ''
+
+        for ind, res in current_scenario.items():
+            rounding_str = param.indicator_str_format[ind]
+
+            if ind == 'Secchi':
+                units = 'm'
+            else:
+                units = 'mg/m³'
+
+            ind_name = param.lakes_indicator_dict[ind]
+            # sec3a = Subsection(f'{ind_name}')
+
+            # table_conc_ref = r'\ref{tab:conc}'
+
+            improve_text = improve_text_dict[ind]
+            improve_perc = improve_perc_dict[ind]
+            scenario_conc = rounding_str.format(res['Scenario'])
+
+            sec_text += f'The {ind_name.lower()} estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units}. '
+
+            # sec_text += f'the estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units} '
+            # doc.append(NoEscape(sec_text))
+
+        sec_text += f'All of the scenario results were estimated using the user-defined mitigations/land use change as shown in Table {table_mitigations}. '
+        sec_text += 'Refer to the user guide for more details on the background and methodology of the calculations.'
+
+        # sec3a.append(NoEscape(sec_text))
+        doc.append(NoEscape(sec_text))
+
+        doc.generate_pdf(clean_tex=True)
+
+        pdf_path = os.path.join(path, f'lake_{lake_id}.pdf')
+        with open(pdf_path, 'rb') as f:
+            # pdf_bytes = io.BytesIO(f.read())
+            pdf_bytes = f.read()
+
+        os.remove(pdf_path)
+
+    return dcc.send_bytes(pdf_bytes, f'lake_{lake_id}.pdf', 'pdf')
 
 
 

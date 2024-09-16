@@ -8,16 +8,15 @@ networks:
     external: true
 
 volumes:
-  olw3-assets:
+  a2e-lake-assets:
 
 services:
   assets:
-    image: mullenkamp/olw3-scenario-app-assets:1.11
+    image: mullenkamp/a2e-lake-scenario-app-assets:1.0
     volumes:
-      - olw3-assets:/app/assets
+      - a2e-lake-assets:/app/assets
     networks:
       - net
-      # - traefik-public
     deploy:
       restart_policy:
         condition: none
@@ -26,9 +25,9 @@ services:
           - node.labels.function == web_server
 
   dash:
-    image: mullenkamp/olw3-scenario-app:1.19
+    image: mullenkamp/a2e-lake-scenario-app:1.0
     volumes:
-      - olw3-assets:/app/assets
+      - a2e-lake-assets:/app/assets
     networks:
       # - net
       - traefik-public
@@ -43,11 +42,11 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
-        - traefik.http.routers.olw3-app-http.rule=Host(`web-app2.monitoringfreshwater.co.nz`)
-        - traefik.http.routers.olw3-app-http.entrypoints=http
-        - traefik.http.routers.olw3-app-http.middlewares=https-redirect
-        - traefik.http.routers.olw3-app-https.rule=Host(`web-app2.monitoringfreshwater.co.nz`)
-        - traefik.http.routers.olw3-app-https.entrypoints=https
-        - traefik.http.routers.olw3-app-https.tls=true
+        - traefik.http.routers.a2e-lake-app-http.rule=Host(`web-app3.monitoringfreshwater.co.nz`)
+        - traefik.http.routers.a2e-lake-app-http.entrypoints=http
+        - traefik.http.routers.a2e-lake-app-http.middlewares=https-redirect
+        - traefik.http.routers.a2e-lake-app-https.rule=Host(`web-app3.monitoringfreshwater.co.nz`)
+        - traefik.http.routers.a2e-lake-app-https.entrypoints=https
+        - traefik.http.routers.a2e-lake-app-https.tls=true
         # - traefik.http.routers.es-dash-https.tls.certresolver=le
-        - traefik.http.services.olw3-app.loadbalancer.server.port=80
+        - traefik.http.services.a2e-lake-app.loadbalancer.server.port=80
