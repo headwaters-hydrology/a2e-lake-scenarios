@@ -212,21 +212,19 @@ def process_reference_conc_rec():
                     f[LFENZID] = res
 
     ### Lake reference values
-    ref_conc0 = pd.read_csv(params.lake_ref_conc_csv).dropna()
+    ref_conc0 = pd.read_csv(params.lake_ref_conc_csv).set_index('LFENZID')
+    ref_conc0 = ref_conc0[[c for c in ref_conc0.columns if 'AbelRef_' in c]].dropna().copy()
+    ref_conc0.columns = [c.split('AbelRef_')[1] for c in ref_conc0.columns]
+    ref_conc0 = ref_conc0.round(3).rename(columns={'SECCHI': 'Secchi'})
 
     # Missing lakes
     lakes_poly1 = gpd.read_file(params.lakes_poly_gpkg_path)
-    ref_conc1 = ref_conc0[ref_conc0.LFENZID.isin(lakes_poly1.LFENZID)].copy()
-    lakes_poly_missing = lakes_poly1[~lakes_poly1.LFENZID.isin(ref_conc1.LFENZID)].copy()
+    ref_conc1 = ref_conc0[ref_conc0.index.isin(lakes_poly1.LFENZID)].copy()
+    lakes_poly_missing = lakes_poly1[~lakes_poly1.LFENZID.isin(ref_conc1.index)].copy()
     lakes_poly_missing['area_ha'] = (lakes_poly_missing.area/10000).round(1)
     lakes_poly_missing.drop('geometry', axis=1).to_csv(params.lake_missing_ref_csv, index=False)
 
-    ## process data
-    ref_conc1 = ref_conc0.drop('Region', axis=1).set_index('LFENZID')
-    ref_conc1 = ref_conc1[[c for c in ref_conc1.columns if 'AbelRef_' in c]].copy()
-    ref_conc1.columns = [c.split('AbelRef_')[1] for c in ref_conc1.columns]
-    ref_conc1 = ref_conc1.round(3).rename(columns={'SECCHI': 'Secchi'})
-
+    ## save data
     with booklet.open(params.lake_reference_conc_path, 'n', value_serializer='orjson', key_serializer='uint4', n_buckets=10007) as f:
         for lake_id, val in ref_conc1.to_dict('index').items():
             f[lake_id] = val

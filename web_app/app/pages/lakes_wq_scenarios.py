@@ -118,6 +118,10 @@ lake_poly_style_handle = assign("""function style(feature) {
 # lake_name = 'Lake Taupo (Taupomoana)'
 # lake_data = {'name': 'Lake Taupo                    (Taupomoana)', 'residence_time': 3506.1802279694543, 'max_depth': 162.8000030517578, 'mean_depth': 54.266667837818886, 'p_residence_time': 0.9833922927018965, 'n_residence_time': 1, 'regional_council': 'Waikato', 'area_ha': 2000, 'cluster': False}
 
+# lake_id = 47579
+# indicator = 'TN'
+
+
 ###############################################
 ### Initial processing
 
@@ -421,7 +425,7 @@ def update_lake_id(feature):
             lake_id = int(feature['id'])
             lake_data = feature['properties']
             lake_name = lake_data['name']
-            # print(lake_id)
+            print(lake_id)
             # print(feature)
 
     return lake_id, lake_data, lake_name
@@ -663,9 +667,13 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
             stats0 = utils.get_value(param.lakes_moni_medians_path, lake_id)
 
             for indicator in param.lakes_indicator_dict:
+                if indicator not in stats0:
+                    raise ValueError()
+
+            for indicator in param.lakes_indicator_dict:
                 results_str1 = param.indicator_str_format[indicator]
                 meas_median = stats0[indicator]
-    
+
                 stats[indicator].append({'name': 'Current (measured)', 'conc': results_str1.format(meas_median)})
 
             scenario_text = 'Scenario (measured)'
@@ -1010,7 +1018,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, la
         if measured:
             sec_text = f'This lake has monitoring data and subsequently the median concentration estimates are from the measured data (Table {table_conc_ref}). '
         else:
-            sec_text = f'This lake does not habe monitoring data and subsequently the median concentration estimates are from modelled results (Table {table_conc_ref}). '
+            sec_text = f'This lake does not have monitoring data and subsequently the median concentration estimates are from modelled results (Table {table_conc_ref}). '
 
         doc.append(NoEscape(sec_text))
 
@@ -1079,7 +1087,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, la
             # sec_text += f'the estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units} '
             # doc.append(NoEscape(sec_text))
 
-        sec_text += f'All of the scenario results were estimated using the user-defined mitigations/land use change as shown in Table {table_mitigations}. '
+        sec_text += f'All of the scenario results were estimated using the user-defined mitigations/land use changes as shown in Table {table_mitigations}. '
         sec_text += 'Refer to the user guide for more details on the background and methodology of the calculations.'
 
         # sec3a.append(NoEscape(sec_text))
