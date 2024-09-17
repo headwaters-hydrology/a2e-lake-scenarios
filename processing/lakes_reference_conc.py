@@ -223,7 +223,8 @@ def process_reference_conc_rec():
 
     ## process data
     ref_conc1 = ref_conc0.drop('Region', axis=1).set_index('LFENZID')
-    ref_conc1.columns = [c.split('reference_')[1] for c in ref_conc1.columns]
+    ref_conc1 = ref_conc1[[c for c in ref_conc1.columns if 'AbelRef_' in c]].copy()
+    ref_conc1.columns = [c.split('AbelRef_')[1] for c in ref_conc1.columns]
     ref_conc1 = ref_conc1.round(3).rename(columns={'SECCHI': 'Secchi'})
 
     with booklet.open(params.lake_reference_conc_path, 'n', value_serializer='orjson', key_serializer='uint4', n_buckets=10007) as f:

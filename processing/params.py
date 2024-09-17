@@ -106,7 +106,7 @@ lakes_poly_gpkg_path = data_path.joinpath('lake_poly.gpkg')
 lakes_points_gpkg_path = data_path.joinpath('lake_points.gpkg')
 
 ## Reference conc
-lake_ref_conc_csv = data_path.joinpath('LakeReferenceIndicators.csv')
+lake_ref_conc_csv = data_path.joinpath('LakeReferenceIndicators_v03.csv')
 lake_missing_ref_csv = data_path.joinpath('lake_ref_missing.csv')
 rivers_ref_conc3_csv_path = data_path.joinpath('reference_conc_rec_level_3.csv')
 rivers_ref_conc2_csv_path = data_path.joinpath('reference_conc_rec_level_2.csv')
