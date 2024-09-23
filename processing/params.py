@@ -53,6 +53,7 @@ lake_model_conc_blt = data_path.joinpath('lake_model_conc_median.blt')
 lake_moni_conc_blt = data_path.joinpath('lake_moni_conc_median.blt')
 lake_moni_conc_csv = data_path.joinpath('lake_moni_conc_median.csv')
 lake_moni_conc_data_blt = data_path.joinpath('lake_moni_conc_data.blt')
+lake_model_moni_conc_blt = data_path.joinpath('lake_model_moni_conc_median.blt')
 lake_metadata_blt = data_path.joinpath('lake_metadata.blt')
 
 lake_lc_data_csv = data_path.joinpath('lake_land_cover_areas_yields.csv')
@@ -113,6 +114,9 @@ rivers_ref_conc2_csv_path = data_path.joinpath('reference_conc_rec_level_2.csv')
 rivers_ref_conc_csv_path = data_path.joinpath('reference_conc_rec_clean.csv.zip')
 rec_reference_conc_path = data_path.joinpath('rec_reference_conc.blt')
 lake_reference_conc_path = data_path.joinpath('lake_reference_conc.blt')
+
+## Best/worst acheivable conc
+lake_achievable_conc_path = data_path.joinpath('lake_achievable_conc.blt')
 
 ## NPS-FM stats and bands
 wq_data_stats_path = data_path.joinpath('river_wq_data_stats.blt')

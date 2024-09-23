@@ -32,6 +32,7 @@ lakes_catch_path = assets_path.joinpath('lake_catch_major_gbuf.blt')
 lakes_lc_red_yields_path = assets_path.joinpath('lake_land_cover_reductions_yields.blt')
 
 lakes_ref_conc_path = assets_path.joinpath('lake_reference_conc.blt')
+lake_achievable_conc_path = assets_path.joinpath('lake_achievable_conc.blt')
 
 lakes_model_medians_path = assets_path.joinpath('lake_model_conc_median.blt')
 lakes_moni_medians_path = assets_path.joinpath('lake_moni_conc_median.blt')

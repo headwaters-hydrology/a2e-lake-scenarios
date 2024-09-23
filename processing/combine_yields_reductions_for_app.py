@@ -33,13 +33,13 @@ def combine_red_yields():
     with booklet.open(params.lakes_land_cover_reductions_path) as r:
         with booklet.open(params.lakes_yields_blt_path) as y:
             for lake_id, yields in y.items():
-
                 if 'farm_type' in yields.columns:
                     yields = yields.drop('farm_type', axis=1)
 
                 red = r[lake_id]
+                red = red[~red.geometry.is_empty].copy()
 
-                # if lake_id == 53532:
+                # if lake_id == 47833:
                 #     d
 
                 combo0 = red.merge(yields.drop(['geometry', 'area_ha'], axis=1), on=['land_cover', 'typology'])

@@ -31,6 +31,199 @@ import geopandas as gpd
 
 import params
 
+###############################################
+### Lake equations
+
+
+def est_b(t):
+    """
+
+    """
+    return 1 + 0.44*(t**0.13)
+
+
+# def est_log_c_lake_p(c_p_in, t, z_max):
+#     """
+
+#     """
+#     if z_max > 7.5:
+#         return np.log10(c_p_in)/est_b(t)
+#     else:
+#         return np.log10(c_p_in)
+
+
+# def est_log_c_lake_n(c_n_in, z_max):
+#     """
+
+#     """
+#     return 1.6 + 0.54*np.log10(c_n_in) - 0.41*np.log10(z_max)
+
+
+# def est_log_c_lake_chla(log_c_lake_p, log_c_lake_n):
+#     """
+
+#     """
+#     return -1.8 + 0.7*log_c_lake_n + 0.55*log_c_lake_p
+
+
+# def est_d_lake_secchi(log_c_lake_chla, z_max, u, fetch):
+#     """
+
+#     """
+#     if z_max >= 20:
+#         return (3.46 - 1.53*log_c_lake_chla)**2
+#     else:
+#         return (3.46 - 0.74*log_c_lake_chla - 0.35*np.log10((fetch*(u**2))/z_max))**2
+
+
+def est_r_lake_p(r_p_in, t, z_max):
+    """
+
+    """
+    if z_max > 7.5:
+        return r_p_in**(1/est_b(t))
+    else:
+        return r_p_in
+
+
+def est_r_lake_n(r_n_in):
+    """
+
+    """
+    return r_n_in**0.54
+
+
+def est_r_lake_chla(r_p_lake, r_n_lake):
+    """
+
+    """
+    return (r_p_lake**0.55) * (r_n_lake**0.7)
+
+
+def est_d_lake_secchi_scenario(r_chla_lake, d_secchi_lake_current, z_max):
+    """
+
+    """
+    if z_max >= 20:
+        return (np.log10(r_chla_lake**-1.53) + (d_secchi_lake_current**0.5))**2
+    else:
+        return (np.log10(r_chla_lake**-0.74) + (d_secchi_lake_current**0.5))**2
+
+
+### Regional equations
+
+def est_b_canterbury(t, z_max):
+    """
+
+    """
+    if z_max > 7.5:
+        b = 1 + 0.91888*(t**0.0205)
+    else:
+        b = 1 + 0.09288*(t**0.0205)
+
+    return b
+
+
+# def est_log_c_lake_p_waikato(c_p_in, t):
+#     """
+
+#     """
+#     b = 1 + t**0.5
+
+#     return 0.9217 + 0.6172 * (np.log10(c_p_in)/b)
+
+
+# def est_log_c_lake_n_waikato(c_n_in, t):
+#     """
+
+#     """
+#     b = 1 + t**0.5
+
+#     return 2.3969 + 0.3564 * (np.log10(c_n_in)/b)
+
+
+# def est_log_c_lake_p_canterbury(c_p_in, t, z_max):
+#     """
+
+#     """
+#     b = est_b_canterbury(t, z_max)
+
+#     return np.log10(c_p_in)/b
+
+
+def est_r_lake_p_waikato(r_p_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return r_p_in**(0.6172/b)
+
+
+def est_r_lake_n_waikato(r_n_in, t):
+    """
+
+    """
+    b = 1 + t**0.5
+
+    return r_n_in**(0.3564/b)
+
+
+def est_r_lake_p_canterbury(r_p_in, t, z_max):
+    """
+
+    """
+    b = est_b_canterbury(t, z_max)
+
+    return r_p_in**(1/b)
+
+
+def est_ind_scenario_conc(current_concs, conc_factors, region, t, z_max):
+    """
+
+    """
+    ## Turn off regional estimates...because they make no sense...
+    # region = ''
+
+    ## Nitrogen
+    r_n_in = conc_factors['nitrogen']
+    c_n_lake_current = current_concs['TN']
+    if region == 'Waikato':
+        r_n_lake = est_r_lake_n_waikato(r_n_in, t)
+    else:
+        r_n_lake = est_r_lake_n(r_n_in)
+
+    c_n_lake_scenario = c_n_lake_current * r_n_lake
+
+    ## TP
+    r_p_in = conc_factors['phosphorus']
+    c_p_lake_current = current_concs['TP']
+    if region == 'Waikato':
+        r_p_lake = est_r_lake_p_waikato(r_p_in, t)
+    elif region == 'Canterbury':
+        r_p_lake = est_r_lake_p_canterbury(r_p_in, t, z_max)
+    else:
+        r_p_lake = est_r_lake_p(r_p_in, t, z_max)
+
+    c_p_lake_scenario = c_p_lake_current * r_p_lake
+
+    ## Chla
+    c_chla_lake_current = current_concs['CHLA']
+
+    r_chla_lake = est_r_lake_chla(r_p_lake, r_n_lake)
+
+    c_chla_lake_scenario = c_chla_lake_current * r_chla_lake
+
+    ## Secchi
+    d_secchi_lake_current = current_concs['Secchi']
+
+    d_secchi_lake_scenario = est_d_lake_secchi_scenario(r_chla_lake, d_secchi_lake_current, z_max)
+
+    ## Package up the results
+    res = {'TN': c_n_lake_scenario, 'TP': c_p_lake_scenario, 'CHLA': c_chla_lake_scenario, 'Secchi': d_secchi_lake_scenario}
+
+    return res
+
 #############################################
 ### Functions
 

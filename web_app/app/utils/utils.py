@@ -179,6 +179,9 @@ def est_ind_scenario_conc(current_concs, conc_factors, region, t, z_max):
     """
 
     """
+    ## Turn off regional estimates...because they make no sense...
+    region = ''
+
     ## Nitrogen
     r_n_in = conc_factors['nitrogen']
     c_n_lake_current = current_concs['TN']
@@ -272,6 +275,9 @@ def calc_scenario_tbl(lake_id, lc_tbl, calc_ready, trig):
 
     data = get_value(param.lakes_lc_red_yields_path, lake_id).reindex(param.lu_order)
 
+    area_ha = data['area_ha']['area_ha']
+    tot_area = area_ha.sum()
+
     cols = ['phosphorus', 'nitrogen']
     # if indicator in ('TP', 'CHLA', 'SECCHI'):
     #     cols.append('phosphorus')
@@ -296,8 +302,10 @@ def calc_scenario_tbl(lake_id, lc_tbl, calc_ready, trig):
         mitigation0 = data0[cols]
         # data2 = pd.concat([data0, data], axis=1)
         # print(data2)
+        # new_contrib = (data['yield'][cols].multiply(tot_area * data0['new_land_area'] * 0.01, axis=0)*(1 - mitigation0*0.01))
         new_contrib = (data['yield'][cols].multiply(data0['new_land_area'], axis=0)*(1 - mitigation0*0.01))
         # data0['new_load'] = ((new_contrib.sum(axis=1)/new_contrib.sum(axis=1).sum()) * 100).astype('int8')
+        old_contrib = data['yield'][cols].multiply(tot_area * data0['land_area'] * 0.01, axis=0)
         old_contrib = data['yield'][cols].multiply(data0['land_area'], axis=0)
         conc_factors = (new_contrib.sum()/old_contrib.sum()).to_dict()
 
@@ -309,8 +317,6 @@ def calc_scenario_tbl(lake_id, lc_tbl, calc_ready, trig):
         #     lc_tbl.append(ld)
 
     else:
-        area_ha = data['area_ha']['area_ha']
-        tot_area = area_ha.sum()
         area_perc = ((area_ha/tot_area) * 100).round().astype('int8')
         sum1 = area_perc.sum()
         if sum1 != 100:

@@ -10,15 +10,15 @@ import numpy as np
 ##################################################
 ### Parameters
 
-c_n_in_current = 4000
-c_n_in_scenario = 800
-c_p_in_current = 100
-c_p_in_scenario = 40
+c_n_in_current = 4352
+c_n_in_scenario = 492.82
+c_p_in_current = 166.5
+c_p_in_scenario = 46.76
 
-z_maxes = [1, 3, 4, 7, 20, 30, 100]
-t = 10
-u = 2
-fetch = 20
+z_maxes = [1.8, 3, 4, 7, 20, 30, 100]
+t = 81.68
+u = 2.656
+fetch = 9796
 
 r_n_in = c_n_in_scenario/c_n_in_current
 r_p_in = c_p_in_scenario/c_p_in_current

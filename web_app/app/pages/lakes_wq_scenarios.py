@@ -121,6 +121,11 @@ lake_poly_style_handle = assign("""function style(feature) {
 # lake_id = 47579
 # indicator = 'TN'
 
+# lake_id = 50782
+# indicator = 'TN'
+# lake_name = 'Lake Waikare'
+# lake_data = {'name': 'Lake Waikare', 'residence_time': 81.68687349644028, 'max_depth': 1.7999999523162842, 'mean_depth': 0.5999999759085639, 'p_residence_time': 0.900379346306269, 'n_residence_time': 1, 'area_ha': 3437.4248046875, 'regional_council': 'Waikato', 'cluster': False}
+
 
 ###############################################
 ### Initial processing
@@ -253,29 +258,29 @@ def layout():
 
                                 dmc.Group(
                                     [
-                                        html.Label('(4) Select indicator for results:', style={'font-size': param.header_font_size}
+                                        html.Label('(3) Select indicator for results:', style={'font-size': param.header_font_size}
                                             ),
-                                        # dmc.HoverCard(
-                                        #     position='bottom',
-                                        #     withArrow=True,
-                                        #     width=250,
-                                        #     shadow="md",
-                                        #     openDelay=1000,
-                                        #     children=[
-                                        #         dmc.HoverCardTarget(DashIconify(icon="material-symbols:help", width=25)),
-                                        #         dmc.HoverCardDropdown(
-                                        #             dcc.Markdown(
-                                        #                 """
-                                        #                 **Indicator** shows the results for the selected indicator, while **Periphyton** shows the results of the Q92 Chla estimate based on the selected indicator. Periphyton cannot be estimated from *E. coli*. See the User Guide for shade definition. The Reference values refer to the median, 5th, and 95th percentiles.
-                                        #                 """,
-                                        #                 style={
-                                        #                     'font-size': 14,
-                                        #                     }
-                                        #                 # size="sm",
-                                        #             )
-                                        #         ),
-                                        #     ],
-                                        # ),
+                                        dmc.HoverCard(
+                                            position='bottom',
+                                            withArrow=True,
+                                            width=250,
+                                            shadow="md",
+                                            openDelay=1000,
+                                            children=[
+                                                dmc.HoverCardTarget(DashIconify(icon="material-symbols:help", width=25)),
+                                                dmc.HoverCardDropdown(
+                                                    dcc.Markdown(
+                                                        """
+                                                        **TN**: Total Nitrogen, **TP**: Total Phosphorus, **Chla**: Chlorophyll a, **Secchi**: Secchi Depth
+                                                        """,
+                                                        style={
+                                                            'font-size': 14,
+                                                            }
+                                                        # size="sm",
+                                                    )
+                                                ),
+                                            ],
+                                        ),
                                         ],
                                     # style={'margin-top': param.space_between_content}
                                     ),
@@ -339,30 +344,12 @@ def layout():
                             # html.Div(id='ts_plot',
                             #          style={'width': '100%', 'height': '40vh', 'margin': "auto", "display": "block"}),
                             utils.make_graph()
-                            # dmc.Group(
-                            #     children=[
-                            #         dmc.Col(html.Div(id='box_plot'), span=6),
-                            #         dmc.Col(html.Div(id='bar_plot'), span=6)
-                            #         ]
-                            #     )
-
-                            # dmc.Group([
-                            # dmc.Col(span=2,
-                            #         children=html.Div([dcc.Graph(id='box_plot')])
-                            #         ),
-                            # dmc.Col(span=2,
-                            #         children=html.Div([dcc.Graph(id='bar_plot')])
-                            #         ),
-                            # ]
-                            # ),
                             ]
                             ),
                         ),
                     ]
                     ),
             dcc.Store(id='lake_id', data=0),
-            # dcc.Store(id='nzsegment', data=''),
-            # dcc.Store(id='source', data=''),
             dcc.Store(id='lake_data', data=None),
             dcc.Store(id='calc_ready', data=0),
             dcc.Store(id='stats', data={}),
@@ -376,33 +363,6 @@ def layout():
 
 ###############################################
 ### Callbacks
-
-# @callback(
-#     Output('lake_id', 'data'),
-#     Output('nzsegment', 'data'),
-#     Output('lake_data', 'data'),
-#     Output('source', 'data'),
-#     [Input('sites_map', 'click_feature')],
-#     prevent_initial_call=True
-#     )
-# def update_lake_id(feature):
-#     """
-
-#     """
-#     lake_id = ''
-#     nzsegment = ''
-#     source = ''
-#     if feature is not None:
-#         if not feature['properties']['cluster']:
-#             lake_id = str(feature['id'])
-#             nzsegment = str(feature['properties']['nzsegment'])
-#             source = feature['properties']['source']
-#             # geometry = feature['geometry']
-
-#     # print(feature)
-#     # print(source)
-
-#     return lake_id, nzsegment, feature, source
 
 
 @callback(
@@ -425,26 +385,10 @@ def update_lake_id(feature):
             lake_id = int(feature['id'])
             lake_data = feature['properties']
             lake_name = lake_data['name']
-            print(lake_id)
+            # print(lake_id)
             # print(feature)
 
     return lake_id, lake_data, lake_name
-
-
-# @callback(
-#     Output('lake_name', 'children'),
-#     [Input('lake_id', 'data')],
-#     prevent_initial_call=True
-#     )
-# def update_site_name(lake_id):
-#     """
-
-#     """
-#     # print(ds_id)
-#     if lake_id != '':
-#         lake_name = utils.get_value(param.lakes_names_path, lake_id)
-
-#         return lake_name
 
 
 @callback(
@@ -496,25 +440,6 @@ def update_reaches(lake_id):
 
     return data
 
-
-# @callback(
-#         Output('indicator', 'options'),
-#         Output('indicator', 'value'),
-#         Input('lake_id', 'data'),
-#         State('indicator', 'value'),
-#         prevent_initial_call=True
-#         )
-# def update_indicators(lake_id, indicator):
-#     output = []
-#     if lake_id > 0:
-#         indicators = utils.get_value(param.lakes_ind_path, lake_id)
-
-#         output = [{'label': val, 'value': key} for key, val in param.lakes_indicator_dict.items() if key in indicators]
-
-#         if indicator not in indicators:
-#             indicator = None
-
-#     return output, indicator
 
 @callback(
         Output('calc_ready', 'data'),
@@ -655,12 +580,12 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
             stats[indicator] = ind_stats
 
         ## Ref conc
-        ref_conc0 = utils.get_value(param.lakes_ref_conc_path, lake_id)
+        # ref_conc0 = utils.get_value(param.lakes_ref_conc_path, lake_id)
 
-        for indicator in param.lakes_indicator_dict:
-            results_str1 = param.indicator_str_format[indicator]
-            ref_conc = ref_conc0[indicator]
-            stats[indicator].append({'name': 'Reference', 'conc': results_str1.format(ref_conc)})
+        # for indicator in param.lakes_indicator_dict:
+        #     results_str1 = param.indicator_str_format[indicator]
+        #     ref_conc = ref_conc0[indicator]
+        #     stats[indicator].append({'name': 'Reference', 'conc': results_str1.format(ref_conc)})
 
         ## Current - measured
         try:
@@ -695,6 +620,9 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
             t = lake_data['residence_time']
             z_max = lake_data['max_depth']
             scenario_stats = utils.est_ind_scenario_conc(stats0, conc_factors, region, t, z_max)
+            # print(conc_factors)
+            # print(stats0)
+            # print(scenario_stats)
             for indicator in param.lakes_indicator_dict:
                 results_str1 = param.indicator_str_format[indicator]
                 scenario_stat = scenario_stats[indicator]
@@ -734,26 +662,6 @@ def update_stats_table(tab, stats):
     stats_tbl = utils.make_results_table(stats_tbl_data, tab)
 
     return stats_tbl
-
-
-# @callback(
-#         Output('box_plot_fig', 'data'),
-#         Input('stats', 'data'),
-#         State('lake_id', 'data'),
-#         State('indicator', 'value'),
-#         prevent_initial_call=True
-#         )
-# def update_box_plot_fig(stats, lake_id, indicator):
-
-#     # print(stats_tbl)
-#     if stats:
-#         fig = utils.make_fig_ind(stats, lake_id, indicator)
-#     else:
-#         fig = None
-
-#     box_plot_fig_enc = utils.encode_obj(fig)
-
-#     return box_plot_fig_enc
 
 
 @callback(
@@ -894,20 +802,20 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, la
     lakes_reaches_dict = geobuf.decode(lakes_reaches_gbuf)
     if lakes_reaches_dict is not None:
         lakes_geo = gpd.GeoDataFrame.from_features(lakes_reaches_dict['features'], crs=4326)
-        lakes_geo.plot(ax=ax, alpha=0.3)
+        lakes_geo.plot(ax=ax, alpha=0.3, zorder=2)
 
     ## Catchment
     catch_gbuf = utils.get_value(param.lakes_catch_path, lake_id)
 
     catch_dict = geobuf.decode(catch_gbuf)
     catch_geo = gpd.GeoDataFrame.from_features(catch_dict['features'], crs=4326)
-    catch_geo.plot(ax=ax, color='lightgrey', edgecolor='black', alpha=0.6)
+    catch_geo.plot(ax=ax, color='lightgrey', edgecolor='black', alpha=0.6, zorder=1)
 
     ## lake polygon location
     poly_gbuf = utils.get_value(param.lakes_poly_path, lake_id)
     poly_dict = geobuf.decode(poly_gbuf)
     poly_geo = gpd.GeoDataFrame.from_features(poly_dict['features'], crs=4326)
-    poly_geo.plot(ax=ax, color='lightblue', edgecolor='black', alpha=1)
+    poly_geo.plot(ax=ax, color='lightblue', edgecolor='black', alpha=1, zorder=3)
 
     # point = gpd.GeoSeries([Point(lake_data['geometry']['coordinates'])], crs=4326)
     # point.plot(ax=ax, color='black')

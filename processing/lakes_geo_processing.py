@@ -97,6 +97,12 @@ def lakes_points_poly_process():
 
     sites1.to_file(params.lakes_points_gpkg_path, index=False)
 
+    ## Save to metadata file
+    sites2 = sites1.drop('geometry', axis=1)
+    with booklet.open(params.lake_metadata_blt, 'n', value_serializer='orjson', key_serializer='uint2', n_buckets=4001) as f:
+        for lake_id, data in sites2.groupby('LFENZID'):
+            f[lake_id] = data.iloc[0].to_dict()
+
     ## Point locations of monitoring sites
     # stdev0 = pd.read_csv(utils.lakes_stdev_moni_path)
     # site_loc0 = pd.read_csv(utils.lakes_raw_moni_data_csv_path, usecols=['LawaSiteID', 'SiteID', 'LFENZID', 'Latitude', 'Longitude',]).rename(columns={'LawaSiteID': 'lawa_id', 'SiteID': 'site_id', 'Latitude': 'lat', 'Longitude': 'lon'})
