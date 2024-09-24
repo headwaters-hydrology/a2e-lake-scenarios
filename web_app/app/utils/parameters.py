@@ -111,6 +111,9 @@ plot_colors = {
     'Band D': f'rgba(251, 180, 174, {fill_opacity})',
     'Current': 'rgb(55, 126, 184)',
     'Scenario': 'rgb(166, 86, 40)',
+    'Reference': 'rgb(170, 170, 170)',
+    'best': 'rgb(170, 170, 170)',
+    'worst': 'rgb(90, 90, 90)',
     }
 
 ### Layout

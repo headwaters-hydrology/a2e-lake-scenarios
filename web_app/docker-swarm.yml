@@ -12,7 +12,7 @@ volumes:
 
 services:
   assets:
-    image: mullenkamp/a2e-lake-scenario-app-assets:1.1
+    image: mullenkamp/a2e-lake-scenario-app-assets:1.2
     volumes:
       - a2e-lake-assets:/app/assets
     networks:
@@ -25,7 +25,7 @@ services:
           - node.labels.function == web_server
 
   dash:
-    image: mullenkamp/a2e-lake-scenario-app:1.1
+    image: mullenkamp/a2e-lake-scenario-app:1.2
     volumes:
       - a2e-lake-assets:/app/assets
     networks:

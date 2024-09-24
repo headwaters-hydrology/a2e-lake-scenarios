@@ -76,7 +76,7 @@ def process_achievable_concs():
                     achieve_conc[lake_id] = {'best': {ind: round(val, 3) for ind, val in c_best.items()}, 'worst': {ind: round(val, 3) for ind, val in c_worst.items()}}
 
     ## save data
-    with booklet.open(params.lake_acheivable_conc_path, 'n', value_serializer='orjson', key_serializer='uint4', n_buckets=10007) as f:
+    with booklet.open(params.lake_achievable_conc_path, 'n', value_serializer='orjson', key_serializer='uint4', n_buckets=10007) as f:
         for lake_id, val in achieve_conc.items():
             f[lake_id] = val
 

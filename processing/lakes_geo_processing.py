@@ -10,7 +10,8 @@ from gistools import vector, rec
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-from shapely import intersection
+from shapely import intersection, intersects
+from shapely.ops import nearest_points, snap
 import hdf5tools
 import xarray as xr
 # import dbm
@@ -33,6 +34,8 @@ cat_cols = ['Current5', 'GeomorphicType']
 num_cols = ['MaxDepth', 'LakeArea', 'DecTemp', 'DecSolrad', 'Fetch', 'SumWind', 'CatBeech', 'CatGlacial', 'CatHard', 'CatPeat', 'CatPhos', 'CatSlope', 'CatAnnTemp', 'DirectDistCoast', 'ResidenceTime', 'Urban', 'Pasture', 'LakeElevation', 'MeanWind']
 model_cols = cat_cols + num_cols
 
+rm_lakes = (13278, 40191, 40190, 20844, 20846, 20851, 20857, 1721, 45730, 45729, 47143, 47262, 45541, 7409, 7408, 12307, 45525, 13873, 13877, 13876, 13857, 14546, 14680, 13957, 13970)
+
 
 def lakes_points_poly_process():
 
@@ -44,7 +47,7 @@ def lakes_points_poly_process():
     with booklet.open(params.lakes_reach_gbuf_path) as f:
         lake_ids = list(f.keys())
 
-    lakes_poly0 = lakes_poly0[lakes_poly0.LFENZID.isin(lake_ids)].copy()
+    lakes_poly0 = lakes_poly0[lakes_poly0.LFENZID.isin(lake_ids) & ~lakes_poly0.LFENZID.isin(rm_lakes)].copy()
     lakes_poly0['LFENZID'] = lakes_poly0['LFENZID'].astype('int32')
 
     lakes_poly0['geometry'] = lakes_poly0.buffer(0).simplify(20).make_valid()
@@ -81,6 +84,16 @@ def lakes_points_poly_process():
     # All lakes
     sites = lakes_poly2.copy()
     sites['geometry'] = sites.geometry.centroid
+
+    # Make sure the points are in the lake!
+    for i in sites.index:
+        point0 = sites.loc[i].geometry
+        poly0 = lakes_poly2.loc[i].geometry
+
+        if not intersects(point0, poly0):
+            point1 = nearest_points(point0, poly0)[1]
+            sites.loc[i, 'geometry'] = point1
+
 
     # Add in the regional council names
     rc_poly = gpd.read_file(params.rc_poly_path)[['REGC2023_V1_00_NAME_ASCII', 'geometry']].rename(columns={'REGC2023_V1_00_NAME_ASCII': 'regional_council'})

@@ -548,7 +548,7 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
         stats = {}
 
         for indicator in param.lakes_indicator_dict:
-            ind_stats = []
+            ind_stats = {}
             if indicator in param.nps_mapping:
                 results_str1 = param.indicator_str_format[indicator]
                 nps = npsfm.NPSFM(param.assets_path)
@@ -561,11 +561,11 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                     median = limits[band]['median'][1]
                     if median >= 10000:
                         band_str = f'> {initial_conc}'
-                        ind_stats.append({'name': f'Band {band}', 'conc': band_str})
+                        ind_stats[f'Band {band}'] = band_str
                         break
                     else:
                         band_str = f'{initial_conc} - {median}'
-                        ind_stats.append({'name': f'Band {band}', 'conc': band_str})
+                        ind_stats[f'Band {band}'] = band_str
     
                     initial_conc = median
     
@@ -575,7 +575,7 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                 else:
                     bl_str = results_str1.format(bl_limit)
     
-                ind_stats.append({'name': 'Bottom line', 'conc': bl_str})
+                ind_stats['Bottom line'] = bl_str
 
             stats[indicator] = ind_stats
 
@@ -599,9 +599,8 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                 results_str1 = param.indicator_str_format[indicator]
                 meas_median = stats0[indicator]
 
-                stats[indicator].append({'name': 'Current (measured)', 'conc': results_str1.format(meas_median)})
+                stats[indicator]['Current (measured)'] = results_str1.format(meas_median)
 
-            scenario_text = 'Scenario (measured)'
         except:
             ## Current - modelled
             stats0 = utils.get_value(param.lakes_model_medians_path, lake_id)
@@ -609,9 +608,11 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                 results_str1 = param.indicator_str_format[indicator]
                 model_median = stats0[indicator]
         
-                stats[indicator].append({'name': 'Current (modelled)', 'conc': results_str1.format(model_median)})
+                stats[indicator]['Current (modelled)'] = results_str1.format(model_median)
 
-            scenario_text = 'Scenario (modelled)'
+        # ## Achievable concs
+        # stats0 = utils.get_value(param.lake_achievable_conc_path, lake_id)
+
 
         ### Scenario calcs
         if conc_factors is not None:
@@ -626,12 +627,12 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
             for indicator in param.lakes_indicator_dict:
                 results_str1 = param.indicator_str_format[indicator]
                 scenario_stat = scenario_stats[indicator]
-                stats[indicator].append({'name': scenario_text, 'conc': results_str1.format(scenario_stat)})
+                stats[indicator]['Scenario'] = results_str1.format(scenario_stat)
 
             disabled = False
         else:
             for indicator in param.lakes_indicator_dict:
-                stats[indicator].append({'name': scenario_text, 'conc': 'Press the Run catchment scenario button'})
+                stats[indicator]['Scenario'] = 'Press the Run catchment scenario button'
 
     else:
         stats = {}
@@ -655,9 +656,9 @@ def update_stats_table(tab, stats):
     # print(tab)
     if tab in stats:
         data = stats[tab]
-        for s in data:
-            if ('Reference' in s['name']) or ('Current' in s['name']) or ('Scenario' in s['name']):
-                stats_tbl_data.append(s)
+        for k, v in data.items():
+            if ('Reference' in k) or ('Current' in k) or ('Scenario' in k):
+                stats_tbl_data.append({'name': k, 'conc': v})
 
     stats_tbl = utils.make_results_table(stats_tbl_data, tab)
 
@@ -679,7 +680,6 @@ def update_box_plot(tab, stats, lake_id):
         fig = utils.make_fig_ind(data_tbl, lake_id, tab)
     else:
         fig = None
-    # fig = utils.decode_obj(box_plot_fig_enc)
 
     return utils.make_graph(fig)
 
@@ -697,7 +697,7 @@ def update_box_plot(tab, stats, lake_id):
         State('lake_data', 'data'),
         prevent_initial_call=True,
         )
-def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, lake_data):
+def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, lake_data):
     """
 
     """
@@ -705,19 +705,19 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, la
     # Determine whether measured or modelled
     measured = True
     measured_text = ' (measured)'
-    for l in stats['TN']:
-        if 'modelled' in l['name']:
+    for k in stats['TN']:
+        if 'modelled' in k:
             measured = False
             measured_text = ' (modelled)'
 
     current_text = 'Current' + measured_text
-    scenario_text = 'Scenario' + measured_text
+    scenario_text = 'Scenario'
 
     current_scenario = {}
     improve_perc_dict = {}
     improve_text_dict = {}
     for ind, res in stats.items():
-        ind_stats = {l['name'].split(' (')[0]: float(l['conc']) for l in res if l['name'] in (current_text, scenario_text, 'Reference')}
+        ind_stats = {k.split(' (')[0]: float(v) for k, v in res.items() if k in (current_text, scenario_text, 'Reference')}
         current_scenario[ind] = ind_stats
 
         improve_perc = int(round((1 - (ind_stats['Scenario']/ind_stats['Current'])) * 100))
@@ -738,22 +738,25 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, la
         improve_perc_dict[ind] = improve_perc
         improve_text_dict[ind] = improve_text
 
+    ## Reference conc
+    ref_conc0 = utils.get_value(param.lakes_ref_conc_path, lake_id)
+
     ## Conc tbl
-    row_names = ['Band A', 'Band B', 'Band C', 'Band D', 'Bottom line', 'Reference']
+    row_names = ['Band A', 'Band B', 'Band C', 'Band D', 'Bottom line']
     if measured:
-        row_names += ['Current (measured)', 'Scenario (measured)']
+        row_names += ['Current (measured)', 'Scenario']
     else:
-        row_names += ['Current (modelled)', 'Scenario (modelled)']
+        row_names += ['Current (modelled)', 'Scenario']
 
     conc_tbl_data = []
     for row_name in row_names:
         row = [row_name]
         for ind in param.lakes_indicator_dict:
             val = None
-            for data in stats[ind]:
-                if data['name'] == row_name:
-                    val = data['conc']
-                    row.append(data['conc'])
+            for k, data in stats[ind].items():
+                if k == row_name:
+                    row.append(data)
+                    val = data
                     break
             if val is None:
                 row.append('')
@@ -957,13 +960,13 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factor, la
 
             # sec_text += f'(Table {table_conc_ref}). '
 
-            ref_median = rounding_str.format(res['Reference'])
+            ref_median = rounding_str.format(ref_conc0[ind])
 
             sec_text += f'The estimated reference median concentration is {ref_median} {units}. '
 
             doc.append(NoEscape(sec_text))
 
-        sec_text = f'The relevant NPS-FM 2020 bands associated with the median concentration attribute states are also listed in Table {table_conc_ref}. '
+        sec_text = f'The relevant NPS-FM 2020 bands associated with the median concentration attribute states are also listed in Table {table_conc_ref}. The reference concentration is an independent estimate of what the natural concentration of the lake would have been before human impact. '
 
         doc.append(NoEscape(sec_text))
 

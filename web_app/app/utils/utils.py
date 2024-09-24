@@ -182,8 +182,10 @@ def est_ind_scenario_conc(current_concs, conc_factors, region, t, z_max):
     ## Turn off regional estimates...because they make no sense...
     region = ''
 
+    # print(conc_factors)
+
     ## Nitrogen
-    r_n_in = conc_factors['nitrogen']
+    r_n_in = conc_factors['nitrogen'] + 0.0001
     c_n_lake_current = current_concs['TN']
     if region == 'Waikato':
         r_n_lake = est_r_lake_n_waikato(r_n_in, t)
@@ -193,7 +195,7 @@ def est_ind_scenario_conc(current_concs, conc_factors, region, t, z_max):
     c_n_lake_scenario = c_n_lake_current * r_n_lake
 
     ## TP
-    r_p_in = conc_factors['phosphorus']
+    r_p_in = conc_factors['phosphorus'] + 0.0001
     c_p_lake_current = current_concs['TP']
     if region == 'Waikato':
         r_p_lake = est_r_lake_p_waikato(r_p_in, t)
@@ -391,26 +393,40 @@ def make_results_table(data=[], tab='TN'):
 ### Figure creation
 
 
-def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
+def make_fig_ind(data_tbl, lake_id, indicator):
     """
     I need to make a figure this way because of a bug in the reset axes of the figure.
     """
-    stats0 = pd.DataFrame(data_tbl).set_index('name')['conc']
-    names = stats0.index
+    # stats0 = pd.DataFrame(data_tbl).set_index('name')['conc']
+    # names = stats0.index
+
+    ## Achievable concs
+    achieve_stats0 = get_value(param.lake_achievable_conc_path, lake_id)
+    worst = achieve_stats0['worst'][indicator]
+    best = achieve_stats0['best'][indicator]
+
+    if indicator == 'Secchi':
+        y_max = best * 1.5
+    else:
+        y_max = worst * 1.5
 
     ## Fig
     fig = go.Figure()
 
     try:
+        ## Monitoring data
         # print(stats0)
         data = get_value(param.lakes_moni_data_path, lake_id).loc[indicator]
 
-        ymax = data.max()
+        y_max_data = data.max()
         if indicator == 'Secchi':
-            y_max_plot = ymax
+            if y_max_data > y_max:
+                y_max = y_max_data
         else:
-            y_max_plot = np.percentile(data.values, 95)
-        # data_len = len(data)
+            y_95th = np.percentile(data.values, 95)
+            if y_95th > y_max:
+                y_max = y_95th
+
         start_date = data.index[0]
         end_date = data.index[-1]
         diff_days = (end_date - start_date).days
@@ -434,27 +450,23 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
                 )
             )
 
-        y_median_current = float(stats0['Current (measured)'])
-        if stats0['Scenario (measured)'] == 'Press the Run catchment scenario button':
+        y_median_current = float(data_tbl['Current (measured)'])
+        if data_tbl['Scenario'] == 'Press the Run catchment scenario button':
             y_median_scenario = None
         else:
-            y_median_scenario = float(stats0['Scenario (measured)'])
+            y_median_scenario = float(data_tbl['Scenario'])
 
         measured = True
 
     except:
-        y_median_current = float(stats0['Current (modelled)'])
-        if stats0['Scenario (modelled)'] == 'Press the Run catchment scenario button':
+        y_median_current = float(data_tbl['Current (modelled)'])
+        if data_tbl['Scenario'] == 'Press the Run catchment scenario button':
             y_median_scenario = None
         else:
-            y_median_scenario = float(stats0['Scenario (modelled)'])
+            y_median_scenario = float(data_tbl['Scenario'])
 
-        # if 'Band D' in stats0:
-        #     ymax = int(stats0['Band D'].split('> ')[1])
-        # else:
-        ymax = y_median_current * 3
+        y_max_data = y_max
 
-        y_max_plot = ymax
         start_x = 0
         end_x = 1
 
@@ -466,15 +478,15 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
     # data_list.extend([stats['median']]*10)
 
     # Bands
-    if 'Band A' in names:
+    if 'Band A' in data_tbl:
         y_previous = 0
-        for name in names:
+        for name in data_tbl:
             if 'Band' in name:
                 if 'D' in name:
                     fig.add_trace(
                         go.Scatter(
                             x=[start_x, end_x],
-                            y=[ymax - y_previous] * 2,
+                            y=[y_max_data - y_previous] * 2,
                             mode='lines',
                             line=dict(width=0.5, color=param.plot_colors[name]),
                             hoverinfo='name',
@@ -483,7 +495,7 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
                             )
                         )
                 else:
-                    ymax1 = float(stats0[name].split('- ')[1])
+                    ymax1 = float(data_tbl[name].split('- ')[1])
                     ymax_plot = ymax1 - y_previous
                     y_previous = ymax1
                     # print(ymax_plot)
@@ -499,21 +511,69 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
                             )
                         )
 
-    # Reference
-    ref_median = float(stats0['Reference'])
+    # # Reference
+    # ref_median = float(stats0['Reference'])
 
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=[start_x, end_x],
+    #         y=[ref_median] * 2,
+    #         mode='lines',
+    #         line=dict(
+    #             dash='dash',
+    #             width=8,
+    #             color='rgb(170, 170, 170)'
+    #             ),
+    #         hoverinfo='name+y',
+    #         name='Reference',
+    #         showlegend=True,
+    #         # fill='toself',
+    #         # fillpattern=dict(
+    #         #     size=10,
+    #         #     solidity=0.2,
+    #         #     shape='/',
+    #         #     bgcolor='rgba(0, 0, 0, 0)',
+    #         #     )
+    #         )
+    #     )
+
+    # Worst
     fig.add_trace(
         go.Scatter(
             x=[start_x, end_x],
-            y=[ref_median] * 2,
+            y=[worst] * 2,
             mode='lines',
             line=dict(
                 dash='dash',
-                width=8,
-                color='rgb(170, 170, 170)'
+                width=4,
+                color=param.plot_colors['worst']
                 ),
             hoverinfo='name+y',
-            name='Reference',
+            name='All Dairy',
+            showlegend=True,
+            # fill='toself',
+            # fillpattern=dict(
+            #     size=10,
+            #     solidity=0.2,
+            #     shape='/',
+            #     bgcolor='rgba(0, 0, 0, 0)',
+            #     )
+            )
+        )
+
+    # Best
+    fig.add_trace(
+        go.Scatter(
+            x=[start_x, end_x],
+            y=[best] * 2,
+            mode='lines',
+            line=dict(
+                dash='dash',
+                width=4,
+                color=param.plot_colors['best']
+                ),
+            hoverinfo='name+y',
+            name='All Native',
             showlegend=True,
             # fill='toself',
             # fillpattern=dict(
@@ -562,15 +622,16 @@ def make_fig_ind(data_tbl=None, lake_id=None, indicator=None):
 
     ## Update layout
     if indicator == 'Secchi':
-        y_range = [0, ref_median * 1.1]
+        # y_range = [0, y_max_plot]
 
-        if y_median_scenario:
-            if y_median_scenario > ref_median:
-                y_range = [0, y_median_scenario * 1.1]
+        # if y_median_scenario:
+        #     if y_median_scenario > ref_median:
+        #         y_range = [0, y_median_scenario * 1.1]
         units = 'm'
     else:
         units = 'mg/m³'
-        y_range = [0, y_max_plot]
+
+    y_range = [0, y_max]
 
     # print(y_range)
 
