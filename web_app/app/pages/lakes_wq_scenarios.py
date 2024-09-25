@@ -908,7 +908,8 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
 
         header = ['Name', 'Total nitrogen (mg/m³)', 'Total phosphorus (mg/m³)', 'Chlorophyll a (mg/m³)', 'Secchi depth (m)']
         base_tbl2 = Table(position="htb")
-        base_tbl2.add_caption('Site median concentrations')
+        tbl_caption = 'Site median concentrations and associated NPS-FM attribute bands'
+        base_tbl2.add_caption(tbl_caption)
         base_tbl2.append(NoEscape(r'\centering'))
         data_table2 = Tabular("| l | R{0.09\linewidth} | R{0.11\linewidth} | R{0.12\linewidth} | R{0.06\linewidth} |")
         data_table2.add_hline()

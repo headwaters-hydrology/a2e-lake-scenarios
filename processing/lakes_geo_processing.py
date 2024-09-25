@@ -54,7 +54,9 @@ def lakes_points_poly_process():
     lakes_poly0.loc[lakes_poly0.name == 'Lake Ototoa', 'LFENZID'] = 50270
 
     lakes_poly0 = lakes_poly0.dropna(subset=['LFENZID']).copy()
-    lakes_poly0['residence_time'] = lakes_poly0['volume']/lakes_poly0['flow'] * 365
+
+    # Residence time is actually in days...but they should be in years
+    lakes_poly0['residence_time'] = lakes_poly0['volume']/lakes_poly0['flow']
     # lakes_poly0.loc[lakes_poly0['residence_time'] < 1, 'residence_time'] = 1
     # lakes_poly0['residence_time'] = lakes_poly0['residence_time'].round().astype('int32')
     # lakes_poly0.loc[lakes_poly0['max_depth'].isnull(), 'max_depth'] = lakes_poly0['max_depth'].median()

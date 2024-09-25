@@ -538,28 +538,28 @@ def make_fig_ind(data_tbl, lake_id, indicator):
     #     )
 
     # Worst
-    fig.add_trace(
-        go.Scatter(
-            x=[start_x, end_x],
-            y=[worst] * 2,
-            mode='lines',
-            line=dict(
-                dash='dash',
-                width=4,
-                color=param.plot_colors['worst']
-                ),
-            hoverinfo='name+y',
-            name='All Dairy',
-            showlegend=True,
-            # fill='toself',
-            # fillpattern=dict(
-            #     size=10,
-            #     solidity=0.2,
-            #     shape='/',
-            #     bgcolor='rgba(0, 0, 0, 0)',
-            #     )
-            )
-        )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=[start_x, end_x],
+    #         y=[worst] * 2,
+    #         mode='lines',
+    #         line=dict(
+    #             dash='dash',
+    #             width=4,
+    #             color=param.plot_colors['worst']
+    #             ),
+    #         hoverinfo='name+y',
+    #         name='All Dairy',
+    #         showlegend=True,
+    #         # fill='toself',
+    #         # fillpattern=dict(
+    #         #     size=10,
+    #         #     solidity=0.2,
+    #         #     shape='/',
+    #         #     bgcolor='rgba(0, 0, 0, 0)',
+    #         #     )
+    #         )
+    #     )
 
     # Best
     fig.add_trace(
