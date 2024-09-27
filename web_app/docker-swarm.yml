@@ -9,6 +9,10 @@ networks:
 
 volumes:
   a2e-lake-assets:
+    driver: vieux/sshfs
+      driver_opts:
+        sshcmd: app@olw-aus2.nzrivers.xyz:/mnt/app_data/a2e-lake-assets
+        password: app4u
 
 services:
   assets:
