@@ -553,7 +553,7 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                 results_str1 = param.indicator_str_format[indicator]
                 nps = npsfm.NPSFM(param.assets_path)
                 nps_param = param.nps_mapping[indicator]
-    
+
                 limits = nps.add_limits('lake', nps_param, lfenzid=lake_id)
                 # len_limits = len(limits)
                 initial_conc = 0
@@ -566,15 +566,15 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
                     else:
                         band_str = f'{initial_conc} - {median}'
                         ind_stats[f'Band {band}'] = band_str
-    
+
                     initial_conc = median
-    
+
                 bl_limit = nps.bottom_line_limit['median'][1]
                 if bl_limit >= 10000:
                     bl_str = 'No bottom line'
                 else:
                     bl_str = results_str1.format(bl_limit)
-    
+
                 ind_stats['Bottom line'] = bl_str
 
             stats[indicator] = ind_stats
@@ -607,7 +607,7 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
             for indicator in param.lakes_indicator_dict:
                 results_str1 = param.indicator_str_format[indicator]
                 model_median = stats0[indicator]
-        
+
                 stats[indicator]['Current (modelled)'] = results_str1.format(model_median)
 
         # ## Achievable concs
@@ -725,7 +725,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
         if ind == 'Secchi':
             if improve_perc < 0:
                 improve_perc = improve_perc * -1
-                improve_text = 'improvement'
+                improve_text = 'improvements'
             else:
                 improve_text = 'degredation'
         else:
@@ -733,20 +733,20 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
                 improve_perc = improve_perc * -1
                 improve_text = 'degredation'
             else:
-                improve_text = 'improvement'
+                improve_text = 'improvements'
 
-        improve_perc_dict[ind] = improve_perc
+        improve_perc_dict[param.lakes_indicator_dict[ind]] = improve_perc
         improve_text_dict[ind] = improve_text
 
     ## Reference conc
     ref_conc0 = utils.get_value(param.lakes_ref_conc_path, lake_id)
 
     ## Conc tbl
-    row_names = ['Band A', 'Band B', 'Band C', 'Band D', 'Bottom line']
     if measured:
-        row_names += ['Current (measured)', 'Scenario']
+        row_names = ['Current (measured)', 'Scenario']
     else:
-        row_names += ['Current (modelled)', 'Scenario']
+        row_names = ['Current (modelled)', 'Scenario']
+    row_names += ['Band A', 'Band B', 'Band C', 'Band D', 'Bottom line']
 
     conc_tbl_data = []
     for row_name in row_names:
@@ -762,16 +762,28 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
                 row.append('')
         conc_tbl_data.append(row)
 
+    row = ['Reference']
+    for ind in param.lakes_indicator_dict:
+        rounding_str = param.indicator_str_format[ind]
+        if ind in ref_conc0:
+            val = rounding_str.format(ref_conc0[ind])
+        else:
+            val = ''
+        row.append(val)
+    conc_tbl_data.append(row)
+
+    row_names.append('Reference')
+
     ## Measured data
-    if measured:
-        stats0 = utils.get_value(param.lakes_moni_data_path, lake_id)
-    
-        grp1 = stats0.reset_index().groupby('indicator')
-    
-        # obs_count = grp1['value'].count().to_dict()
-        obs_min_dates = grp1['date'].first().to_dict()
-        obs_max_dates = grp1['date'].last().to_dict()
-        obs_medians = grp1['value'].median().to_dict()
+    # if measured:
+    #     stats0 = utils.get_value(param.lakes_moni_data_path, lake_id)
+
+    #     grp1 = stats0.reset_index().groupby('indicator')
+
+    #     # obs_count = grp1['value'].count().to_dict()
+    #     obs_min_dates = grp1['date'].first().to_dict()
+    #     obs_max_dates = grp1['date'].last().to_dict()
+    #     obs_medians = grp1['value'].median().to_dict()
 
     # scenario_conc = current_scenario['Scenario']
     # ref_mean, ref_lower, ref_upper = utils.sep_reference_values([s['conc'] for s in stats if s['name'] == 'Reference'][0])
@@ -843,9 +855,9 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
         doc.preamble.append(NoEscape(r'\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}'))
 
         if lake_name == 'No name':
-            doc.preamble.append(Command('title', f'Scenario builder results for the lake with the DOC lake id {lake_id}'))
+            doc.preamble.append(Command('title', f'Lakes scenario builder results for the lake with the DOC lake ID {lake_id}'))
         else:
-            doc.preamble.append(Command('title', f'Scenario builder results for {lake_name}'))
+            doc.preamble.append(Command('title', f'Lakes scenario builder results for {lake_name}'))
         # doc.preamble.append(catch_name)
         # doc.preamble.append(Command('date', NoEscape(r'\today')))
         # doc.preamble.append(NoEscape(r'\today'))
@@ -854,15 +866,14 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
         ## Catchment location section
         with doc.create(Section('Monitoring site and catchment information')):
             if lake_name == 'No name':
-                text = f'The user-selected lake has no official name and is within {agency}. '
+                text = 'The user-selected lake has no official name '
             else:
-                text = f'The user-selected lake is named "{lake_name}" and is within {agency}. '
+                text = f'The user-selected lake is named {lake_name} '
 
-            text += f'The lake is also given the ID of {lake_id} by DOC. The lake has an estimated area of {lake_area} ha, a maximum depth of {max_depth} m, and a water residence time of {residence_time} years. The surrounding surface water catchment has an estimated area of {tot_area:,} ha '
+            text += f'and is within the {agency} region. The lake is also given the ID of {lake_id} by DOC. The lake has an estimated area of {lake_area} ha, a maximum depth of {max_depth} m, and a water residence time of {residence_time} years. The surrounding surface water catchment has an estimated area of {tot_area:,} ha '
 
             # if catch_name != 'Unnamed':
             #     text += f'It is located within the larger {catch_name} catchment '
-
             doc.append(text)
             doc.append(NoEscape(r'(Figure \ref{fig:catchment}).'))
             # position='htbp'
@@ -903,7 +914,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
 
         ## Section 2
         # sec2 =  Section('Land areas and mitigations')
-        sec2 =  Section('Current estimates')
+        sec2 =  Section('Current estimates and scenario outcomes')
         doc.append(sec2)
 
         header = ['Name', 'Total nitrogen (mg/m³)', 'Total phosphorus (mg/m³)', 'Chlorophyll a (mg/m³)', 'Secchi depth (m)']
@@ -917,6 +928,8 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
         data_table2.add_hline()
         for row in conc_tbl_data:
             # row = [values['name'], values['conc']]
+            if row[0] in ('Band A'):
+                data_table2.add_hline()
             data_table2.add_row(row, strict=False)
         data_table2.add_hline()
         base_tbl2.append(data_table2)
@@ -927,83 +940,94 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
 
         table_conc_ref = r'\ref{tab:conc}'
 
+        sec_text = f'Table {table_conc_ref} shows the median concentrations for the four indicators. '
+
         if measured:
-            sec_text = f'This lake has monitoring data and subsequently the median concentration estimates are from the measured data (Table {table_conc_ref}). '
+            sec_text += 'This lake has monitoring data and subsequently the median concentrations are from measured data. '
         else:
-            sec_text = f'This lake does not have monitoring data and subsequently the median concentration estimates are from modelled results (Table {table_conc_ref}). '
+            sec_text += 'This lake does not have monitoring data and subsequently the median concentrations are from modelled estimates. '
+
+        sec_text += f'The scenario outcomes are given as the estimated median concentrations/depth and percent improvement, based on the scenario mitigations and land areas in Table {table_mitigations}. '
+
+        ind_text = ', '.join([t.lower() for t in improve_perc_dict])
+        perc_improve_text = ', '.join([str(v) for v in improve_perc_dict.values()])
+
+        sec_text += f'The scenario outcomes indicate {improve_text} of {perc_improve_text}\% in {ind_text} respectively. '
+
+        sec_text += f'Table {table_conc_ref} also shows the estimated reference state of each indicator; this is an independent estimate of the natural state of the lake before human impact (see the Scenario Builder for Lakes User Guide for further details). The National Policy Statement for Freshwater Management 2020 (NPS-FM) attribute state bands for median concentrations of total nitrogen, total phosphorus, and phytoplankton (chlorophyll a) are shown in Table {table_conc_ref}. '
 
         doc.append(NoEscape(sec_text))
 
         # 2.1 - Indicators
         # sec2a = Subsection('Indicators')
-        for ind, res in current_scenario.items():
-            # rounding = param.indicator_rounding[ind]
-            rounding_str = param.indicator_str_format[ind]
-            if ind == 'Secchi':
-                units = 'm'
-            else:
-                units = 'mg/m³'
+        # for ind, res in current_scenario.items():
+        #     # rounding = param.indicator_rounding[ind]
+        #     rounding_str = param.indicator_str_format[ind]
+        #     if ind == 'Secchi':
+        #         units = 'm'
+        #     else:
+        #         units = 'mg/m³'
 
-            ind_name = param.lakes_indicator_dict[ind]
-            # sec2a = Subsection(f'{ind_name}')
+        #     ind_name = param.lakes_indicator_dict[ind]
+        #     # sec2a = Subsection(f'{ind_name}')
 
-            if measured:
-                obs_min_date = str(obs_min_dates[ind])
-                obs_max_date = str(obs_max_dates[ind])
-                obs_median = rounding_str.format(obs_medians[ind])
+        #     if measured:
+        #         obs_min_date = str(obs_min_dates[ind])
+        #         obs_max_date = str(obs_max_dates[ind])
+        #         obs_median = rounding_str.format(obs_medians[ind])
 
-                sec_text = f'The {ind_name.lower()} current measured estimate of the median concentration for the 5 year period from an initial observation at {obs_min_date} to a final observation at {obs_max_date} is {obs_median} {units}. '
-            else:
-                model_median = rounding_str.format(res['Current'])
-                sec_text = f'The {ind_name.lower()} current modelled estimate of the median concentration is {model_median} {units}. '
+        #         sec_text = f'The {ind_name.lower()} current measured estimate of the median concentration for the 5 year period from an initial observation at {obs_min_date} to a final observation at {obs_max_date} is {obs_median} {units}. '
+        #     else:
+        #         model_median = rounding_str.format(res['Current'])
+        #         sec_text = f'The {ind_name.lower()} current modelled estimate of the median concentration is {model_median} {units}. '
 
-            # table_conc_ref = r'\ref{tab:conc}'
+        #     # table_conc_ref = r'\ref{tab:conc}'
 
-            # sec_text += f'(Table {table_conc_ref}). '
+        #     # sec_text += f'(Table {table_conc_ref}). '
 
-            ref_median = rounding_str.format(ref_conc0[ind])
+        #     ref_median = rounding_str.format(ref_conc0[ind])
 
-            sec_text += f'The estimated reference median concentration is {ref_median} {units}. '
+        #     sec_text += f'The estimated reference median concentration is {ref_median} {units}. '
 
-            doc.append(NoEscape(sec_text))
+        #     doc.append(NoEscape(sec_text))
 
-        sec_text = f'The relevant NPS-FM 2020 bands associated with the median concentration attribute states are also listed in Table {table_conc_ref}. The reference concentration is an independent estimate of what the natural concentration of the lake would have been before human impact. '
+        # sec_text = f'The relevant NPS-FM 2020 bands associated with the median concentration attribute states are also listed in Table {table_conc_ref}. The reference concentration is an independent estimate of what the natural concentration of the lake would have been before human impact. '
 
-        doc.append(NoEscape(sec_text))
+        # doc.append(NoEscape(sec_text))
 
-        ## Section 3
-        sec3 = Section('Scenario outcomes')
-        doc.append(sec3)
+        # ## Section 3
+        # sec3 = Section('Scenario outcomes')
+        # doc.append(sec3)
 
-        sec_text = ''
+        # sec_text = ''
 
-        for ind, res in current_scenario.items():
-            rounding_str = param.indicator_str_format[ind]
+        # for ind, res in current_scenario.items():
+        #     rounding_str = param.indicator_str_format[ind]
 
-            if ind == 'Secchi':
-                units = 'm'
-            else:
-                units = 'mg/m³'
+        #     if ind == 'Secchi':
+        #         units = 'm'
+        #     else:
+        #         units = 'mg/m³'
 
-            ind_name = param.lakes_indicator_dict[ind]
-            # sec3a = Subsection(f'{ind_name}')
+        #     ind_name = param.lakes_indicator_dict[ind]
+        #     # sec3a = Subsection(f'{ind_name}')
 
-            # table_conc_ref = r'\ref{tab:conc}'
+        #     # table_conc_ref = r'\ref{tab:conc}'
 
-            improve_text = improve_text_dict[ind]
-            improve_perc = improve_perc_dict[ind]
-            scenario_conc = rounding_str.format(res['Scenario'])
+        #     improve_text = improve_text_dict[ind]
+        #     improve_perc = improve_perc_dict[ind]
+        #     scenario_conc = rounding_str.format(res['Scenario'])
 
-            sec_text += f'The {ind_name.lower()} estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units}. '
+        #     sec_text += f'The {ind_name.lower()} estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units}. '
 
-            # sec_text += f'the estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units} '
-            # doc.append(NoEscape(sec_text))
+        #     # sec_text += f'the estimated {improve_text} at the lake is {improve_perc}\% with a resulting median concentration of {scenario_conc} {units} '
+        #     # doc.append(NoEscape(sec_text))
 
-        sec_text += f'All of the scenario results were estimated using the user-defined mitigations/land use changes as shown in Table {table_mitigations}. '
-        sec_text += 'Refer to the user guide for more details on the background and methodology of the calculations.'
+        # sec_text += f'All of the scenario results were estimated using the user-defined mitigations/land use changes as shown in Table {table_mitigations}. '
+        # sec_text += 'Refer to the user guide for more details on the background and methodology of the calculations.'
 
-        # sec3a.append(NoEscape(sec_text))
-        doc.append(NoEscape(sec_text))
+        # # sec3a.append(NoEscape(sec_text))
+        # doc.append(NoEscape(sec_text))
 
         doc.generate_pdf(clean_tex=True)
 

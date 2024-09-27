@@ -12,7 +12,7 @@ orjson==3.6.7
 dash_leaflet==0.1.28
 shapely==2.0.1
 scipy==1.11.4
-numpy==1.26.0
+numpy<2
 numexpr==2.8.8
 jmespath==1.0.0
 werkzeug==2.0.3

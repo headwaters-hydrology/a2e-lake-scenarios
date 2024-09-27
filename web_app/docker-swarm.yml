@@ -30,7 +30,7 @@ services:
           - node.hostname == olw-aus2.nzrivers.xyz
 
   dash:
-    image: mullenkamp/a2e-lake-scenario-app:1.3
+    image: mullenkamp/a2e-lake-scenario-app:1.4
     volumes:
       - a2e-lake-assets:/app/assets
     networks:
