@@ -9,10 +9,10 @@ networks:
 
 volumes:
   a2e-lake-assets:
-    driver: vieux/sshfs
-      driver_opts:
-        sshcmd: app@olw-aus2.nzrivers.xyz:/mnt/app_data/a2e-lake-assets
-        password: app4u
+    # driver: vieux/sshfs
+    # driver_opts:
+    #   sshcmd: app@olw-aus2.nzrivers.xyz:/mnt/app_data/a2e-lake-assets
+    #   password: app4u
 
 services:
   assets:
@@ -27,6 +27,7 @@ services:
       placement:
         constraints:
           - node.labels.function == web_server
+          - node.hostname == olw-aus2.nzrivers.xyz
 
   dash:
     image: mullenkamp/a2e-lake-scenario-app:1.3
@@ -42,6 +43,7 @@ services:
       placement:
         constraints:
           - node.labels.function == web_server
+          - node.hostname == olw-aus2.nzrivers.xyz
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
