@@ -6,23 +6,23 @@ networks:
     attachable: true
 
 volumes:
-  olw3-assets-test:
+  a2e-lake-assets-test:
 
 services:
   assets:
-    image: mullenkamp/olw3-scenario-app-assets:1.9
+    image: mullenkamp/a2e-lake-scenario-app-assets:1.3
     volumes:
-      - olw3-assets-test:/app/assets
+      - a2e-lake-assets-test:/app/assets
     networks:
       - net
     deploy:
       restart_policy:
         condition: none
 
-  olw3-app:
-    image: mullenkamp/olw3-scenario-app:1.15
+  a2e-lake-app:
+    image: mullenkamp/a2e-lake-scenario-app:1.4.1
     volumes:
-      - olw3-assets-test:/app/assets
+      - a2e-lake-assets-test:/app/assets
     networks:
       - net
     depends_on:

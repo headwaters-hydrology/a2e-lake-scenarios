@@ -26,7 +26,7 @@ services:
         condition: none
       placement:
         constraints:
-          - node.labels.function == web_server
+          # - node.labels.function == web_server
           - node.hostname == olw-aus2.nzrivers.xyz
 
   dash:
@@ -42,7 +42,7 @@ services:
       replicas: 3
       placement:
         constraints:
-          - node.labels.function == web_server
+          # - node.labels.function == web_server
           - node.hostname == olw-aus2.nzrivers.xyz
       labels:
         - traefik.enable=true
