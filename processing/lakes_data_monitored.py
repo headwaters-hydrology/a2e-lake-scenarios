@@ -396,7 +396,8 @@ def lakes_monitored_conc():
     moni5 = utils.dtl_correction(ts_data3, 'half').drop('censor_code', axis=1)
 
     ## Must have recent data
-    moni6 = moni5.set_index(['lawa_id', 'indicator'])
+    moni6 = moni5.set_index(['lawa_id', 'indicator']).sort_index()
+    moni7 = moni5.set_index(['lawa_id', 'indicator', 'date']).value.sort_index()
     grp = moni6.groupby(['lawa_id', 'indicator'])
 
     max_dates = grp.date.max()
@@ -406,30 +407,45 @@ def lakes_monitored_conc():
     max_dates = max_dates[recent_bool] + pd.DateOffset(seconds=1)
     max_dates.name = 'max_date'
 
-    ## Must have at least 20 samples in the past 5 years
-    min_dates = pd.to_datetime((max_dates - pd.DateOffset(years=5) - pd.offsets.MonthBegin()).dt.date)
+    ## Must have 4 samples per year in the last 5 years
+    min_dates = pd.to_datetime((max_dates - pd.DateOffset(years=5) + pd.offsets.MonthBegin()).dt.date)
     min_dates.name = 'min_date'
-    min_max_dates = pd.concat([min_dates, max_dates], axis=1)
 
-    data_list = []
-    for i, data in min_max_dates.iterrows():
-        data1 = moni6.loc[i]
-        data2 = data1[(data1.date >= data.min_date) & (data1.date <= data.max_date)].reset_index()
-        if len(data2) >= 20:
-            data_list.append(data2)
+    exclude_set = set()
+    for index, min_date in min_dates.items():
+        data1 = moni7.loc[index]
+        for i in range(5):
+            max_date = min_date + pd.DateOffset(years=i+1) - pd.offsets.MonthEnd()
+            data2 = data1.loc[min_date:max_date].count()
+            if data2 < 4:
+                exclude_set.add(index)
 
-    wq_data1 = pd.concat(data_list)
+    wq_data2 = moni6[~moni6.index.isin(exclude_set)].reset_index().copy()
 
-    ## check the sampling frequency and only use data with < 93 days freq
-    freq_list = []
-    for i, row in wq_data1.groupby(['lawa_id', 'indicator']):
-        freq = est_median_freq(row)
-        if freq < 93:
-            freq_list.append([*i, freq])
+    # ## Must have at least 20 samples in the past 5 years
+    # min_dates = pd.to_datetime((max_dates - pd.DateOffset(years=5) - pd.offsets.MonthBegin()).dt.date)
+    # min_dates.name = 'min_date'
+    # min_max_dates = pd.concat([min_dates, max_dates], axis=1)
 
-    freq_df = pd.DataFrame(freq_list, columns=['lawa_id', 'indicator', 'freq'])
+    # data_list = []
+    # for i, data in min_max_dates.iterrows():
+    #     data1 = moni6.loc[i]
+    #     data2 = data1[(data1.date >= data.min_date) & (data1.date <= data.max_date)].reset_index()
+    #     if len(data2) >= 20:
+    #         data_list.append(data2)
 
-    wq_data2 = pd.merge(freq_df[['lawa_id', 'indicator']], wq_data1, on=['lawa_id', 'indicator'])
+    # wq_data1 = pd.concat(data_list)
+
+    # ## check the sampling frequency and only use data with < 93 days freq
+    # freq_list = []
+    # for i, row in wq_data1.groupby(['lawa_id', 'indicator']):
+    #     freq = est_median_freq(row)
+    #     if freq < 93:
+    #         freq_list.append([*i, freq])
+
+    # freq_df = pd.DataFrame(freq_list, columns=['lawa_id', 'indicator', 'freq'])
+
+    # wq_data2 = pd.merge(freq_df[['lawa_id', 'indicator']], wq_data1, on=['lawa_id', 'indicator'])
 
     ## Filter the sites
     site_data2 = site_data1[site_data1['LawaSiteID'].isin(wq_data2.lawa_id.unique())].rename(columns={'LawaSiteID': 'lawa_id'})

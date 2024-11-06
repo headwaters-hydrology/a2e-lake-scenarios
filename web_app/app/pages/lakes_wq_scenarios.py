@@ -588,31 +588,35 @@ def calc_stats(conc_factors, lake_id, stats, lake_data):
         #     stats[indicator].append({'name': 'Reference', 'conc': results_str1.format(ref_conc)})
 
         ## Current - measured
-        try:
-            stats0 = utils.get_value(param.lakes_moni_medians_path, lake_id)
+        stats_moni0 = utils.get_value(param.lakes_moni_medians_path, lake_id)
+        stats_model0 = utils.get_value(param.lakes_model_medians_path, lake_id)
 
-            for indicator in param.lakes_indicator_dict:
-                if indicator not in stats0:
-                    raise ValueError()
+        stats0 = {}
 
-            for indicator in param.lakes_indicator_dict:
-                results_str1 = param.indicator_str_format[indicator]
-                meas_median = stats0[indicator]
-
-                stats[indicator]['Current (measured)'] = results_str1.format(meas_median)
-
-        except:
-            ## Current - modelled
-            stats0 = utils.get_value(param.lakes_model_medians_path, lake_id)
+        if stats_moni0 is None:
             for indicator in param.lakes_indicator_dict:
                 results_str1 = param.indicator_str_format[indicator]
-                model_median = stats0[indicator]
+                model_median = stats_model0[indicator]
 
                 stats[indicator]['Current (modelled)'] = results_str1.format(model_median)
 
+                stats0[indicator] = model_median
+        else:
+            for indicator in param.lakes_indicator_dict:
+                results_str1 = param.indicator_str_format[indicator]
+                median = stats_moni0.get(indicator)
+
+                if median is None:
+                    median = stats_model0[indicator]
+
+                    stats[indicator]['Current (modelled)'] = results_str1.format(median)
+                else:
+                    stats[indicator]['Current (measured)'] = results_str1.format(median)
+
+                stats0[indicator] = median
+
         # ## Achievable concs
         # stats0 = utils.get_value(param.lake_achievable_conc_path, lake_id)
-
 
         ### Scenario calcs
         if conc_factors is not None:
@@ -703,24 +707,36 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
     """
     ## Pre-calcs
     # Determine whether measured or modelled
-    measured = True
-    measured_text = ' (measured)'
-    for k in stats['TN']:
-        if 'modelled' in k:
-            measured = False
-            measured_text = ' (modelled)'
+    # measured = True
+    # measured_text = ' (measured)'
+    # for k in stats['TN']:
+    #     if 'modelled' in k:
+    #         measured = False
+    #         measured_text = ' (modelled)'
 
-    current_text = 'Current' + measured_text
-    scenario_text = 'Scenario'
+    # current_text = 'Current' + measured_text
+    # scenario_text = 'Scenario'
 
+    measured_dict = {}
     current_scenario = {}
     improve_perc_dict = {}
     improve_text_dict = {}
     for ind, res in stats.items():
-        ind_stats = {k.split(' (')[0]: float(v) for k, v in res.items() if k in (current_text, scenario_text, 'Reference')}
-        current_scenario[ind] = ind_stats
+        temp = {}
+        for k, v in res.items():
+            if 'Current' in k:
+                name, mm = k.split(' (')
+                if 'modelled' in mm:
+                    measured_dict[ind] = False
+                else:
+                    measured_dict[ind] = True
+                temp[name] = float(v)
+            elif k in ('Scenario', 'Reference'):
+                temp[k.split(' (')[0]] = float(v)
 
-        improve_perc = int(round((1 - (ind_stats['Scenario']/ind_stats['Current'])) * 100))
+        current_scenario[ind] = temp
+
+        improve_perc = int(round((1 - (temp['Scenario']/temp['Current'])) * 100))
 
         if ind == 'Secchi':
             if improve_perc < 0:
@@ -742,10 +758,12 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
     ref_conc0 = utils.get_value(param.lakes_ref_conc_path, lake_id)
 
     ## Conc tbl
-    if measured:
-        row_names = ['Current (measured)', 'Scenario']
-    else:
-        row_names = ['Current (modelled)', 'Scenario']
+    # if measured:
+    #     row_names = ['Current (measured)', 'Scenario']
+    # else:
+    #     row_names = ['Current (modelled)', 'Scenario']
+
+    row_names = ['Current', 'Scenario']
     row_names += ['Band A', 'Band B', 'Band C', 'Band D', 'Bottom line']
 
     conc_tbl_data = []
@@ -754,7 +772,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
         for ind in param.lakes_indicator_dict:
             val = None
             for k, data in stats[ind].items():
-                if k == row_name:
+                if row_name in k:
                     row.append(data)
                     val = data
                     break
@@ -895,7 +913,7 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
         base_tbl = Table(position="htb")
         base_tbl.add_caption('Land area contributions and mitigations')
         base_tbl.append(NoEscape(r'\centering'))
-        data_table = Tabular('| l | R{0.06\linewidth} | R{0.08\linewidth} | R{0.10\linewidth} | R{0.12\linewidth} | R{0.12\linewidth} | R{0.06\linewidth} |')
+        data_table = Tabular('| l | R{0.06\linewidth} | R{0.08\linewidth} | R{0.10\linewidth} | R{0.06\linewidth} | R{0.12\linewidth} | R{0.12\linewidth} |')
         data_table.add_hline()
         data_table.add_row(['', MultiColumn(3, align='c|', data='Current'), MultiColumn(3, align='c|', data='Scenario')], strict=False)
         data_table.add_row(list(lc_tbl_dict.values()), strict=False)
@@ -942,10 +960,27 @@ def make_pdf_report(n_clicks, lc_tbl, stats, lake_id, lake_name, conc_factors, l
 
         sec_text = f'Table {table_conc_ref} shows the median concentrations for the four indicators. '
 
-        if measured:
-            sec_text += 'This lake has monitoring data and subsequently the median concentrations are from measured data. '
-        else:
-            sec_text += 'This lake does not have monitoring data and subsequently the median concentrations are from modelled estimates. '
+        moni_indicators = []
+        model_indicators = []
+
+        for ind, meas_bool in measured_dict.items():
+            ind_name = param.lakes_indicator_dict[ind].lower()
+            if meas_bool:
+                moni_indicators.append(ind_name)
+            else:
+                model_indicators.append(ind_name)
+
+        if moni_indicators:
+            text = ', '.join(moni_indicators)
+            sec_text += f'This lake has monitoring data for {text}. Subsequently, the median concentrations from these indicators are from measured data. '
+        if model_indicators:
+            text = ', '.join(model_indicators)
+            sec_text += f'This lake does not have monitoring data for {text}. Subsequently, the median concentrations from these indicators are modelled. '
+
+        # if measured:
+        #     sec_text += 'This lake has monitoring data and subsequently the median concentrations are from measured data. '
+        # else:
+        #     sec_text += 'This lake does not have monitoring data and subsequently the median concentrations are from modelled estimates. '
 
         sec_text += f'The scenario outcomes are given as the estimated median concentrations/depth and percent improvement, based on the scenario mitigations and land areas in Table {table_mitigations}. '
 

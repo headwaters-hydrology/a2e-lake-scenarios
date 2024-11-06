@@ -243,7 +243,7 @@ def get_value(file_path, key):
 
     """
     with booklet.open(file_path) as f:
-        value = f[key]
+        value = f.get(key)
 
     return value
 

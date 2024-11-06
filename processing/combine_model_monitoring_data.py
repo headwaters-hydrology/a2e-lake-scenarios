@@ -39,6 +39,9 @@ def combine_model_monitoring_data():
                         data = moni_data
                         data['measured'] = True
 
+                # if lake_id == lake_id1:
+                #     d
+
                 combo_dict[lake_id] = data
 
     ## Save results

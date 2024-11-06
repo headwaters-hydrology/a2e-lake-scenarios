@@ -87,9 +87,9 @@ tbl_cols_dict = {
     'land_area': ['Current', 'Land area %'],
     'load_n': ['Current', 'Nitrogen Load %'],
     'load_p': ['Current', 'Phosphorus Load %'],
+    'new_land_area': ['Scenario', 'Land area %'],
     'nitrogen': ['Scenario', 'Nitrogen Mitigation %'],
     'phosphorus': ['Scenario', 'Phosphorus Mitigation %'],
-    'new_land_area': ['Scenario', 'Land area %'],
     # 'new_load': ['Scenario', 'Load contribution %']
     }
 
