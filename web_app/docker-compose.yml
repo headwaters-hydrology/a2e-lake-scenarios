@@ -10,7 +10,7 @@ volumes:
 
 services:
   assets:
-    image: mullenkamp/a2e-lake-scenario-app-assets:1.4
+    image: mullenkamp/a2e-lake-scenario-app-assets:1.5
     volumes:
       - a2e-lake-assets:/app/assets
     networks:
@@ -20,7 +20,7 @@ services:
         condition: none
 
   a2e-lake-app:
-    image: mullenkamp/a2e-lake-scenario-app:1.5
+    image: mullenkamp/a2e-lake-scenario-app:1.6
     volumes:
       - a2e-lake-assets:/app/assets
     networks:

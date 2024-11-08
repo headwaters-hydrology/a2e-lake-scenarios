@@ -411,16 +411,24 @@ def lakes_monitored_conc():
     min_dates = pd.to_datetime((max_dates - pd.DateOffset(years=5) + pd.offsets.MonthBegin()).dt.date)
     min_dates.name = 'min_date'
 
-    exclude_set = set()
+    include_set = set()
     for index, min_date in min_dates.items():
         data1 = moni7.loc[index]
         for i in range(5):
             max_date = min_date + pd.DateOffset(years=i+1) - pd.offsets.MonthEnd()
-            data2 = data1.loc[min_date:max_date].count()
-            if data2 < 4:
-                exclude_set.add(index)
+            data2 = data1.loc[min_date:max_date]
+            if data2.count() >= 4:
+                include_set.add(index)
 
-    wq_data2 = moni6[~moni6.index.isin(exclude_set)].reset_index().copy()
+    data_list = []
+    for index in include_set:
+        min_date = min_dates[index]
+        max_date = min_date + pd.DateOffset(years=5) - pd.offsets.MonthEnd()
+        i2 = (index[0], index[1], slice(min_date, max_date))
+        data1 = moni7.loc[i2]
+        data_list.append(data1)
+
+    wq_data2 = pd.concat(data_list).reset_index()
 
     # ## Must have at least 20 samples in the past 5 years
     # min_dates = pd.to_datetime((max_dates - pd.DateOffset(years=5) - pd.offsets.MonthBegin()).dt.date)

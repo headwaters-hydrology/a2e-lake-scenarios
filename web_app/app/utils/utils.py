@@ -340,7 +340,7 @@ def calc_scenario_tbl(lake_id, lc_tbl, calc_ready, trig):
         lc_tbl = []
         for i, lc in enumerate(data.index):
             red1 = reductions.iloc[i]
-            dict1 = {'land_cover': lc, 'land_area': area_perc[i], 'load_n': mass_perc['nitrogen'][i], 'load_p': mass_perc['phosphorus'][i], 'nitrogen': red1['nitrogen'], 'phosphorus': red1['phosphorus'], 'new_land_area': area_perc[i]}
+            dict1 = {'land_cover': lc, 'land_area': area_perc[i], 'load_n': mass_perc['nitrogen'][i], 'load_p': mass_perc['phosphorus'][i], 'new_land_area': area_perc[i], 'nitrogen': red1['nitrogen'], 'phosphorus': red1['phosphorus']}
 
             lc_tbl.append(dict1)
 

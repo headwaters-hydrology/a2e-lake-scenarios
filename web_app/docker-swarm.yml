@@ -16,7 +16,7 @@ volumes:
 
 services:
   assets:
-    image: mullenkamp/a2e-lake-scenario-app-assets:1.4
+    image: mullenkamp/a2e-lake-scenario-app-assets:1.5
     volumes:
       - a2e-lake-assets:/app/assets
     networks:
@@ -30,7 +30,7 @@ services:
           - node.hostname == olw-aus2.nzrivers.xyz
 
   dash:
-    image: mullenkamp/a2e-lake-scenario-app:1.5
+    image: mullenkamp/a2e-lake-scenario-app:1.6
     volumes:
       - a2e-lake-assets:/app/assets
     networks:
