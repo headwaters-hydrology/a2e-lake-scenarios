@@ -180,7 +180,7 @@ def est_ind_scenario_conc(current_concs, conc_factors, region, t, z_max):
 
     """
     ## Turn off regional estimates...because they make no sense...
-    # region = ''
+    region = ''
 
     # print(conc_factors)
 
